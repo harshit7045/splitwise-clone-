@@ -1,30 +1,36 @@
-import { useState } from 'react';
-import { View, TextInput, ScrollView } from 'react-native';
-import { YStack, XStack, Text, Button, Circle, Avatar } from 'tamagui';
+import { useState, useEffect } from 'react';
+import { View, TextInput, ScrollView, Alert } from 'react-native';
+import { YStack, XStack, Text, Button, Circle } from 'tamagui';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import client from '../../api/client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { X } from 'lucide-react-native';
 import { NeoButton, NeoButtonText } from '../../components/ui/NeoButton';
 import { NeoInput } from '../../components/ui/NeoInput';
 
 export default function AddExpenseScreen() {
     const router = useRouter();
+    const queryClient = useQueryClient();
     const [amount, setAmount] = useState('');
     const [description, setDescription] = useState('');
-    const [selectedUsers, setSelectedUsers] = useState<number[]>([1, 2, 3]); // Default everyone selected
+    const [selectedUsers, setSelectedUsers] = useState<number[]>([]); // START EMPTY
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const { group_id } = useLocalSearchParams();
 
     // 1. Fetch Real Group Members
-    const { data: members = [] } = useQuery({
+    const { data: members = [], isSuccess } = useQuery({
         queryKey: ['members', group_id],
-        queryFn: async () => {
-            const response = await client.get(`/expenses/groups/${group_id}/members/`);
-            return response.data; // Backend returns [{id, username, name, email}, ...]
-        },
-        enabled: !!group_id // Only run if we have an ID
+        queryFn: async () => (await client.get(`/expenses/groups/${group_id}/members/`)).data,
+        enabled: !!group_id
     });
+
+    // 2. Auto-select all members once loaded (PREVENTS CRASH)
+    useEffect(() => {
+        if (isSuccess && members.length > 0) {
+            setSelectedUsers(members.map((m: any) => m.id));
+        }
+    }, [isSuccess, members]);
 
     const toggleUser = (id: number) => {
         if (selectedUsers.includes(id)) {
@@ -34,19 +40,20 @@ export default function AddExpenseScreen() {
         }
     };
 
-
-
     const handleSplit = async () => {
-        try {
-            if (!amount || !description) return;
+        if (!amount || !description || selectedUsers.length === 0) {
+            Alert.alert("Error", "Please enter amount, description, and select at least one person.");
+            return;
+        }
 
-            // Calculate split amount (simple equal split for now)
+        setIsSubmitting(true);
+        try {
             const splitAmount = (parseFloat(amount) / selectedUsers.length).toFixed(2);
 
             const payload = {
                 description: description,
                 amount: parseFloat(amount),
-                category: 'OTHER', // Default category
+                category: 'OTHER',
                 shares: selectedUsers.map(userId => ({
                     user_id: userId,
                     amount: splitAmount
@@ -55,10 +62,17 @@ export default function AddExpenseScreen() {
 
             await client.post(`/expenses/groups/${group_id}/expenses/`, payload);
 
+            // Invalidate queries to refresh previous screens
+            queryClient.invalidateQueries({ queryKey: ['expenses'] });
+            queryClient.invalidateQueries({ queryKey: ['globalBalance'] });
+            queryClient.invalidateQueries({ queryKey: ['recentActivity'] });
+
             router.back();
         } catch (error) {
             console.error("Failed to add expense", error);
-            alert("Failed to add expense");
+            Alert.alert("Error", "Failed to add expense. Please try again.");
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -69,8 +83,6 @@ export default function AddExpenseScreen() {
             </XStack>
 
             <YStack flex={1} padding="$4" space="$5">
-
-                {/* Amount Input */}
                 <YStack alignItems="center" space="$2">
                     <Text color="$color" opacity={0.5} fontFamily="$body">ENTER AMOUNT</Text>
                     <XStack alignItems="center">
@@ -82,17 +94,11 @@ export default function AddExpenseScreen() {
                             placeholderTextColor="#444"
                             keyboardType="numeric"
                             autoFocus
-                            style={{
-                                fontSize: 64,
-                                color: '#D0FF48',
-                                fontFamily: 'InterBold', // Fallback
-                                minWidth: 50
-                            }}
+                            style={{ fontSize: 64, color: '#D0FF48', fontFamily: 'InterBold', minWidth: 50 }}
                         />
                     </XStack>
                 </YStack>
 
-                {/* Description */}
                 <NeoInput
                     placeholder="What's this for?"
                     value={description}
@@ -100,7 +106,6 @@ export default function AddExpenseScreen() {
                     textAlign="center"
                 />
 
-                {/* Split With */}
                 <YStack space="$3">
                     <Text color="$color" fontFamily="$heading" fontSize={16}>SPLIT WITH</Text>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -129,8 +134,8 @@ export default function AddExpenseScreen() {
 
                 <View style={{ flex: 1 }} />
 
-                <NeoButton onPress={handleSplit} disabled={!amount}>
-                    <NeoButtonText>SPLIT IT 💸</NeoButtonText>
+                <NeoButton onPress={handleSplit} disabled={!amount || isSubmitting}>
+                    <NeoButtonText>{isSubmitting ? 'SPLITTING...' : 'SPLIT IT 💸'}</NeoButtonText>
                 </NeoButton>
             </YStack>
         </View>

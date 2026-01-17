@@ -1,31 +1,38 @@
-import { View, ScrollView } from 'react-native';
-import { YStack, XStack, Text, Circle, Avatar, Button } from 'tamagui';
+import { View, ScrollView, RefreshControl } from 'react-native';
+import { YStack, XStack, Text, Circle, Button } from 'tamagui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Plus, ArrowLeft } from 'lucide-react-native';
 import { NeoCard } from '../../components/ui/NeoCard';
-import { useAuth } from '../../hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
 import client from '../../api/client';
+import { useAuth } from '../../hooks/useAuth'; // Import Auth
 import { ActivityIndicator } from 'react-native';
+import React from 'react';
 
 export default function GroupDetailScreen() {
     const { id } = useLocalSearchParams();
     const router = useRouter();
+    const { user } = useAuth(); // REAL USER
 
-    const { data: expensesData, isLoading } = useQuery({
+    // 1. Fetch Expenses
+    const { data: expensesData, isLoading: expensesLoading, refetch: refetchExpenses } = useQuery({
         queryKey: ['expenses', id],
-        queryFn: async () => {
-            const response = await client.get(`/expenses/groups/${id}/expenses/`);
-            return response.data.results;
-        }
+        queryFn: async () => (await client.get(`/expenses/groups/${id}/expenses/`)).data
     });
 
-    if (isLoading) return <View style={{ flex: 1, backgroundColor: '#1E1E1E', justifyContent: 'center' }}><ActivityIndicator /></View>;
+    // 2. Fetch Group Details (Name) - NEW
+    const { data: groupData, isLoading: groupLoading } = useQuery({
+        queryKey: ['group', id],
+        queryFn: async () => (await client.get(`/expenses/groups/${id}/`)).data
+    });
 
-    const expenses = expensesData || [];
+    const onRefresh = React.useCallback(() => {
+        refetchExpenses();
+    }, []);
 
-    const { user } = useAuth(); // <--- Get the real logged-in user
-    const currentUserId = user?.id; // <--- Use their real ID
+    if (expensesLoading || groupLoading) return <View style={{ flex: 1, backgroundColor: '#1E1E1E', justifyContent: 'center' }}><ActivityIndicator /></View>;
+
+    const expenses = expensesData?.results || [];
 
     return (
         <View style={{ flex: 1, backgroundColor: '#1E1E1E', paddingTop: 60 }}>
@@ -33,7 +40,8 @@ export default function GroupDetailScreen() {
             <XStack alignItems="center" paddingHorizontal="$4" marginBottom="$4" justifyContent="space-between">
                 <XStack alignItems="center" space="$3">
                     <Button icon={ArrowLeft} chromeless onPress={() => router.back()} color="$color" />
-                    <Text fontFamily="$heading" fontSize={24} color="$color">Goa Trip 2025</Text>
+                    {/* REAL GROUP NAME */}
+                    <Text fontFamily="$heading" fontSize={24} color="$color">{groupData?.name || 'Group'}</Text>
                 </XStack>
                 <Circle size={40} backgroundColor="$secondary">
                     <Text fontSize={18} top={1}>🌴</Text>
@@ -41,15 +49,18 @@ export default function GroupDetailScreen() {
             </XStack>
 
             {/* Expense Chat Stream */}
-            <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 100 }}>
-                <YStack space="$4">
-                    <Text textAlign="center" opacity={0.5} fontSize={12} color="$color">Today</Text>
+            <ScrollView
+                contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
+                refreshControl={<RefreshControl refreshing={false} onRefresh={onRefresh} tintColor="#D0FF48" />}
+            >
+                {expenses.length === 0 && <Text color="$color" textAlign="center" opacity={0.5}>No expenses yet. Start spending!</Text>}
 
+                <YStack space="$4">
                     {expenses.map((expense: any) => {
-                        const isMe = expense.paidById === currentUserId;
+                        const isMe = expense.paid_by === user?.id; // CHECK REAL ID
                         return (
                             <XStack key={expense.id} justifyContent={isMe ? 'flex-end' : 'flex-start'}>
-                                {!isMe && <Circle size={30} backgroundColor="gray" marginRight="$2"><Text>{expense.paidBy[0]}</Text></Circle>}
+                                {!isMe && <Circle size={30} backgroundColor="gray" marginRight="$2"><Text>{expense.paid_by_name?.[0]}</Text></Circle>}
 
                                 <YStack>
                                     <NeoCard
@@ -63,7 +74,7 @@ export default function GroupDetailScreen() {
                                         <Text fontFamily="$heading" fontSize={16} color="$color">{expense.description}</Text>
                                         <Text fontFamily="$heading" fontSize={24} color={isMe ? '$primary' : '$color'}>₹{expense.amount}</Text>
                                         <Text fontSize={10} opacity={0.6} color="$color" marginTop="$1">
-                                            {isMe ? `Paid by you • ${expense.split}` : `Paid by ${expense.paidBy} • ${expense.split}`}
+                                            {isMe ? `Paid by you` : `Paid by ${expense.paid_by_name}`}
                                         </Text>
                                     </NeoCard>
                                 </YStack>

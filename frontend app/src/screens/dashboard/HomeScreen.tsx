@@ -1,33 +1,46 @@
-import { View, ScrollView } from 'react-native';
-import { YStack, XStack, Text, Avatar, Circle, Separator } from 'tamagui';
+import { View, ScrollView, RefreshControl } from 'react-native'; // Added RefreshControl
+import { YStack, XStack, Text, Circle } from 'tamagui';
 import { useAuth } from '../../hooks/useAuth';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import client from '../../api/client';
 import { ActivityIndicator } from 'react-native';
-import { NeoCard } from '../../components/ui/NeoCard'; // Will create this next
-import { Bell, Plus } from 'lucide-react-native';
+import { Plus } from 'lucide-react-native';
+import React from 'react';
 
 export default function DashboardScreen() {
     const { user } = useAuth();
     const router = useRouter();
 
     // 1. Fetch Groups
-    const { data: groups, isLoading } = useQuery({
+    const { data: groups, isLoading: groupsLoading, refetch: refetchGroups } = useQuery({
         queryKey: ['groups'],
-        queryFn: async () => {
-            const response = await client.get('/expenses/groups/');
-            return response.data;
-        }
+        queryFn: async () => (await client.get('/expenses/groups/')).data
     });
 
-    if (isLoading) return <View style={{ flex: 1, backgroundColor: '#1E1E1E', justifyContent: 'center', alignItems: 'center' }}><ActivityIndicator /></View>;
+    // 2. Fetch Global Balance (NEW)
+    const { data: balance, isLoading: balanceLoading, refetch: refetchBalance } = useQuery({
+        queryKey: ['globalBalance'],
+        queryFn: async () => (await client.get('/expenses/user/balance/')).data
+    });
 
-    // Mock activities for now
-    const activities = [
-        { id: 101, description: 'Lunch at Cafe', amount: '100.00', paid_by: 'rudra', time: '2h ago' },
-        { id: 102, description: 'Uber', amount: '450.00', paid_by: 'alice', time: '5h ago' },
-    ];
+    // 3. Fetch Recent Activity (NEW)
+    const { data: activityData, isLoading: activityLoading, refetch: refetchActivity } = useQuery({
+        queryKey: ['recentActivity'],
+        queryFn: async () => (await client.get('/expenses/user/activity/')).data
+    });
+
+    const onRefresh = React.useCallback(() => {
+        refetchGroups();
+        refetchBalance();
+        refetchActivity();
+    }, []);
+
+    if (groupsLoading || balanceLoading || activityLoading) {
+        return <View style={{ flex: 1, backgroundColor: '#1E1E1E', justifyContent: 'center' }}><ActivityIndicator /></View>;
+    }
+
+    const activities = activityData?.results || [];
 
     return (
         <View style={{ flex: 1, backgroundColor: '#1E1E1E', padding: 20, paddingTop: 60 }}>
@@ -35,60 +48,73 @@ export default function DashboardScreen() {
             <XStack justifyContent="space-between" alignItems="center" marginBottom="$4">
                 <YStack>
                     <Text fontFamily="$heading" fontSize={24} color="$color">Good Morning,</Text>
-                    <Text fontFamily="$heading" fontSize={24} color="$primary">{user?.name || 'User'}!</Text>
+                    <Text fontFamily="$heading" fontSize={24} color="$primary">{user?.name || user?.username}!</Text>
                 </YStack>
                 <Circle size={50} backgroundColor="$secondary" elevation={5}>
                     <Text fontFamily="$heading" color="white" fontSize={20}>{user?.username?.[0]?.toUpperCase()}</Text>
                 </Circle>
             </XStack>
 
-            {/* Global Balance Card */}
-            <YStack backgroundColor="#2B2D31" padding="$4" borderRadius={16} borderWidth={1} borderColor="$borderColor" marginBottom="$6">
-                <Text color="$color" opacity={0.6}>Total Balance</Text>
-                <Text color="$primary" fontFamily="$heading" fontSize={42}>₹ 1,200.00</Text>
-                <Text color="$color" fontSize={12} marginTop="$2">You are owed <Text color="$primary">₹1,500</Text> & owe <Text color="$error">₹300</Text></Text>
-            </YStack>
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                refreshControl={<RefreshControl refreshing={false} onRefresh={onRefresh} tintColor="#D0FF48" />}
+            >
+                {/* Global Balance Card (REAL DATA) */}
+                <YStack backgroundColor="#2B2D31" padding="$4" borderRadius={16} borderWidth={1} borderColor="$borderColor" marginBottom="$6">
+                    <Text color="$color" opacity={0.6}>Total Balance</Text>
+                    <Text color={balance?.total_balance >= 0 ? "$primary" : "$error"} fontFamily="$heading" fontSize={42}>
+                        ₹ {balance?.total_balance || 0}
+                    </Text>
+                    <Text color="$color" fontSize={12} marginTop="$2">
+                        You are owed <Text color="$primary">₹{balance?.owed_to_you || 0}</Text> & owe <Text color="$error">₹{balance?.you_owe || 0}</Text>
+                    </Text>
+                </YStack>
 
-            {/* Squads Rail */}
-            <Text fontFamily="$heading" fontSize={18} marginBottom="$3" color="$color">YOUR SQUADS</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 30 }}>
-                <XStack space="$4">
-                    <YStack alignItems="center" space="$2" onPress={() => { }}>
-                        <Circle size={70} backgroundColor="$borderColor" borderWidth={2} borderColor="$primary" borderStyle='dashed' justifyContent='center' alignItems='center'>
-                            <Plus size={30} color="#D0FF48" />
-                        </Circle>
-                        <Text fontSize={12} color="$color">New Squad</Text>
-                    </YStack>
-
-                    {groups?.map((group: any) => (
-                        <YStack key={group.id} alignItems="center" space="$2" onPress={() => router.push(`/group/${group.id}`)}>
-                            <Circle size={70} backgroundColor="$secondary" borderWidth={2} borderColor="$color">
-                                <Text fontSize={24} top={2}>🏟️</Text>
+                {/* Squads Rail */}
+                <Text fontFamily="$heading" fontSize={18} marginBottom="$3" color="$color">YOUR SQUADS</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 30 }}>
+                    <XStack space="$4">
+                        <YStack alignItems="center" space="$2" onPress={() => router.push('/groups/create')}>
+                            <Circle size={70} backgroundColor="$borderColor" borderWidth={2} borderColor="$primary" borderStyle='dashed' justifyContent='center' alignItems='center'>
+                                <Plus size={30} color="#D0FF48" />
                             </Circle>
-                            <Text fontSize={12} color="$color" maxWidth={70} numberOfLines={1}>{group.name}</Text>
+                            <Text fontSize={12} color="$color">New Squad</Text>
                         </YStack>
-                    ))}
-                </XStack>
-            </ScrollView>
 
-            {/* Recent Activity */}
-            <Text fontFamily="$heading" fontSize={18} marginBottom="$3" color="$color">RECENT DROPS</Text>
-            <ScrollView showsVerticalScrollIndicator={false}>
-                <YStack space="$3">
-                    {activities.map((activity) => (
-                        <XStack key={activity.id} backgroundColor="#2B2D31" padding="$3" borderRadius={12} alignItems="center" justifyContent="space-between">
-                            <XStack space="$3" alignItems="center">
-                                <Circle size={40} backgroundColor="$primary" opacity={0.2}><Text>💸</Text></Circle>
-                                <YStack>
-                                    <Text color="$color" fontWeight="bold">{activity.description}</Text>
-                                    <Text color="$color" fontSize={12} opacity={0.6}>{activity.paid_by} added • {activity.time}</Text>
-                                </YStack>
+                        {groups?.map((group: any) => (
+                            <YStack key={group.id} alignItems="center" space="$2" onPress={() => router.push(`/group/${group.id}`)}>
+                                <Circle size={70} backgroundColor="$secondary" borderWidth={2} borderColor="$color">
+                                    <Text fontSize={24} top={2}>🏟️</Text>
+                                </Circle>
+                                <Text fontSize={12} color="$color" maxWidth={70} numberOfLines={1}>{group.name}</Text>
+                            </YStack>
+                        ))}
+                    </XStack>
+                </ScrollView>
+
+                {/* Recent Activity (REAL DATA) */}
+                <Text fontFamily="$heading" fontSize={18} marginBottom="$3" color="$color">RECENT DROPS</Text>
+                <YStack space="$3" paddingBottom="$10">
+                    {activities.length === 0 ? (
+                        <Text color="$color" opacity={0.5}>No expenses yet.</Text>
+                    ) : (
+                        activities.map((activity: any) => (
+                            <XStack key={activity.id} backgroundColor="#2B2D31" padding="$3" borderRadius={12} alignItems="center" justifyContent="space-between">
+                                <XStack space="$3" alignItems="center">
+                                    <Circle size={40} backgroundColor="$primary" opacity={0.2}><Text>💸</Text></Circle>
+                                    <YStack>
+                                        <Text color="$color" fontWeight="bold">{activity.description}</Text>
+                                        <Text color="$color" fontSize={12} opacity={0.6}>
+                                            {activity.paid_by_name} paid • {new Date(activity.created_at).toLocaleDateString()}
+                                        </Text>
+                                    </YStack>
+                                </XStack>
+                                <Text color="$primary" fontFamily="$body" fontWeight="bold">
+                                    ₹{activity.amount}
+                                </Text>
                             </XStack>
-                            <Text color={activity.paid_by === 'rudra' ? '$primary' : '$error'} fontFamily="$body" fontWeight="bold">
-                                {activity.paid_by === 'rudra' ? '+' : '-'} ₹{activity.amount}
-                            </Text>
-                        </XStack>
-                    ))}
+                        ))
+                    )}
                 </YStack>
             </ScrollView>
         </View>

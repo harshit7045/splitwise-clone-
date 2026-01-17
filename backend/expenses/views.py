@@ -178,3 +178,42 @@ class GroupBalanceView(views.APIView):
                 })
 
         return Response(balances)
+
+# --- NEW: Dashboard & Activity Views ---
+
+class UserGlobalBalanceView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # Calculate what I owe others
+        i_owe = ExpenseSplit.objects.filter(
+            user=request.user
+        ).exclude(expense__paid_by=request.user).aggregate(Sum('amount'))['amount__sum'] or 0
+
+        # Calculate what others owe me
+        owed_to_me = ExpenseSplit.objects.filter(
+            expense__paid_by=request.user
+        ).exclude(user=request.user).aggregate(Sum('amount'))['amount__sum'] or 0
+
+        return Response({
+            "total_balance": owed_to_me - i_owe,
+            "you_owe": i_owe,
+            "owed_to_you": owed_to_me
+        })
+
+class UserActivityView(generics.ListAPIView):
+    serializer_class = ExpenseSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
+
+    def get_queryset(self):
+        # Show expenses from all groups I am in, ordered by newest
+        return Expense.objects.filter(
+            group__members=self.request.user
+        ).order_by('-created_at')
+
+class GroupDetailView(generics.RetrieveAPIView):
+    queryset = Group.objects.all()
+    serializer_class = GroupSerializer
+    permission_classes = [IsAuthenticated]
+    lookup_field = 'id'
