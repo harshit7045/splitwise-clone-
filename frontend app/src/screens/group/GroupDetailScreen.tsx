@@ -3,6 +3,7 @@ import { YStack, XStack, Text, Circle, Avatar, Button } from 'tamagui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Plus, ArrowLeft } from 'lucide-react-native';
 import { NeoCard } from '../../components/ui/NeoCard';
+import { useAuth } from '../../hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
 import client from '../../api/client';
 import { ActivityIndicator } from 'react-native';
@@ -23,7 +24,8 @@ export default function GroupDetailScreen() {
 
     const expenses = expensesData || [];
 
-    const currentUserId = 1; // Mock current user
+    const { user } = useAuth(); // <--- Get the real logged-in user
+    const currentUserId = user?.id; // <--- Use their real ID
 
     return (
         <View style={{ flex: 1, backgroundColor: '#1E1E1E', paddingTop: 60 }}>
