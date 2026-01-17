@@ -31,11 +31,11 @@ class ExpenseSplitSerializer(serializers.ModelSerializer):
 class ExpenseSerializer(serializers.ModelSerializer):
     # CHANGE THIS:
     paid_by_name = serializers.ReadOnlyField(source='paid_by.name') 
-    splits = ExpenseSplitSerializer(many=True, source='shares') 
+    shares = ExpenseSplitSerializer(many=True) 
 
     class Meta:
         model = Expense
-        fields = ['id', 'description', 'amount', 'created_at', 'category', 'paid_by', 'paid_by_name', 'splits']
+        fields = ['id', 'description', 'amount', 'created_at', 'category', 'paid_by', 'paid_by_name', 'shares']
         # FIX: Remove 'category' from this list so the frontend can save it
         read_only_fields = ['created_at', 'paid_by']
 
