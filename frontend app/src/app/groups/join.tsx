@@ -16,8 +16,8 @@ export default function JoinGroupScreen() {
         setLoading(true);
         try {
             // Calls your existing backend endpoint
-            await client.post(`/expenses/groups/${groupId}/join/`);
-            Alert.alert("Success", "Joined group!");
+            const response = await client.post(`/expenses/groups/${groupId}/join/`);
+            Alert.alert("Status", response.data.message);
             router.replace('/(tabs)');
         } catch (error) {
             Alert.alert("Error", "Could not find group with that ID");

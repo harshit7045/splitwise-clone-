@@ -16,9 +16,9 @@ User = get_user_model()
 
 # --- Pagination Settings ---
 class StandardResultsSetPagination(PageNumberPagination):
-    page_size = 10
+    page_size = 100
     page_size_query_param = 'page_size'
-    max_page_size = 100
+    max_page_size = 1000
 
 # ==========================================
 # GROUP MANAGEMENT
@@ -226,7 +226,10 @@ class UserActivityView(generics.ListAPIView):
         ).order_by('-created_at')
 
 class GroupDetailView(generics.RetrieveAPIView):
-    queryset = Group.objects.all()
     serializer_class = GroupSerializer
     permission_classes = [IsAuthenticated]
     lookup_field = 'id'
+
+    def get_queryset(self):
+        # SECURITY FIX: Only allow viewing groups I am a member of
+        return Group.objects.filter(members=self.request.user)

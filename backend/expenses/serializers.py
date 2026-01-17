@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import Group, GroupMember, Expense, ExpenseSplit
+from django.db import transaction
 
 User = get_user_model()
 
@@ -68,11 +69,12 @@ class ExpenseSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("You are not a member of this group.")
         
         # Create the Expense
-        expense = Expense.objects.create(group=group, paid_by=paid_by, **validated_data)
+        # FIX: Atomic transaction ensures ALL or NOTHING is saved
+        with transaction.atomic():
+            expense = Expense.objects.create(group=group, paid_by=paid_by, **validated_data)
 
-        # Create the Splits
-        for split in splits_data:
-            ExpenseSplit.objects.create(expense=expense, **split)
+            for split in splits_data:
+                ExpenseSplit.objects.create(expense=expense, **split)
             
         return expense
 
