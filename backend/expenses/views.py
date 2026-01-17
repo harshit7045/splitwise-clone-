@@ -155,25 +155,27 @@ class GroupBalanceView(views.APIView):
         owed_to_me = ExpenseSplit.objects.filter(
             expense__group=group,
             expense__paid_by=request.user
-        ).exclude(user=request.user).values('user__username', 'user__id').annotate(total=Sum('amount'))
+        ).exclude(user=request.user).values('user__username', 'user__id', 'user__name').annotate(total=Sum('amount'))
 
         # Fetch all splits where the user OWES
         b_owe_them = ExpenseSplit.objects.filter(
             expense__group=group,
             user=request.user
-        ).exclude(expense__paid_by=request.user).values('expense__paid_by__username', 'expense__paid_by__id').annotate(total=Sum('amount'))
+        ).exclude(expense__paid_by=request.user).values('expense__paid_by__username', 'expense__paid_by__id', 'expense__paid_by__name').annotate(total=Sum('amount'))
         
         # Merge results in Python
         balances_map = {}
 
         for item in owed_to_me:
              uid = item['user__id']
-             name = item['user__username']
+             # FIX: Prefer Real Name, fallback to Username
+             name = item['user__name'] or item['user__username'] 
              balances_map[uid] = {'name': name, 'amount': item['total']}
 
         for item in b_owe_them:
              uid = item['expense__paid_by__id']
-             name = item['expense__paid_by__username']
+             # FIX: Prefer Real Name, fallback to Username
+             name = item['expense__paid_by__name'] or item['expense__paid_by__username']
              current = balances_map.get(uid, {'name': name, 'amount': 0})
              current['amount'] -= item['total']
              balances_map[uid] = current

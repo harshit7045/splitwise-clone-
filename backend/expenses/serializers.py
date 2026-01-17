@@ -36,7 +36,8 @@ class ExpenseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Expense
         fields = ['id', 'description', 'amount', 'created_at', 'category', 'paid_by', 'paid_by_name', 'splits']
-        read_only_fields = ['created_at', 'paid_by', 'category']
+        # FIX: Remove 'category' from this list so the frontend can save it
+        read_only_fields = ['created_at', 'paid_by']
 
     def validate(self, data):
         """
