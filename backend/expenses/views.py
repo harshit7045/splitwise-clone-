@@ -71,7 +71,11 @@ class GroupMembersView(generics.ListAPIView):
 
     def get_queryset(self):
         group_id = self.kwargs['group_id']
-        return User.objects.filter(joined_groups__id=group_id, joined_groups__members=self.request.user).distinct()
+        # SECURITY FIX: Only return members if the requester is ALSO in the group
+        return User.objects.filter(
+            joined_groups__id=group_id,
+            joined_groups__members=self.request.user
+        ).distinct()
 
 
 # ==========================================

@@ -82,9 +82,9 @@ export default function DashboardScreen() {
                             <Text fontSize={12} color="$color">New Squad</Text>
                         </YStack>
 
-                        {/* JOIN BUTTON */}
+                        {/* JOIN BUTTON (NEW) */}
                         <YStack alignItems="center" space="$2" onPress={() => router.push('/groups/join')}>
-                            <Circle size={70} backgroundColor="#2B2D31" borderWidth={2} borderColor="$color" borderStyle='dashed' justifyContent='center' alignItems='center'>
+                            <Circle size={70} backgroundColor="#2B2D31" borderWidth={2} borderColor="$color" justifyContent='center' alignItems='center'>
                                 <Text fontSize={24}>🔗</Text>
                             </Circle>
                             <Text fontSize={12} color="$color">Join Squad</Text>

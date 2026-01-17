@@ -28,7 +28,8 @@ class ExpenseSplitSerializer(serializers.ModelSerializer):
 
 # --- 4. Main Expense Logic ---
 class ExpenseSerializer(serializers.ModelSerializer):
-    paid_by_name = serializers.ReadOnlyField(source='paid_by.name')
+    # CHANGE THIS:
+    paid_by_name = serializers.ReadOnlyField(source='paid_by.name') 
     splits = ExpenseSplitSerializer(many=True, source='shares') 
 
     class Meta:

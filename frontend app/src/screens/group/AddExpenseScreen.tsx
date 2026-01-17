@@ -42,7 +42,7 @@ export default function AddExpenseScreen() {
 
     const handleSplit = async () => {
         if (!amount || !description || selectedUsers.length === 0) {
-            Alert.alert("Error", "Fill all fields");
+            Alert.alert("Error", "Please enter amount, description, and select at least one person.");
             return;
         }
 
@@ -51,17 +51,15 @@ export default function AddExpenseScreen() {
             const totalAmount = parseFloat(amount);
             const count = selectedUsers.length;
 
-            // 1. Calculate Base Split (floor)
+            // 1. Calculate the base amount (floor to 2 decimals)
             const baseSplit = Math.floor((totalAmount / count) * 100) / 100;
 
-            // 2. Calculate Remainder
+            // 2. Calculate the remainder (pennies left over)
             const currentSum = baseSplit * count;
             const remainder = Math.round((totalAmount - currentSum) * 100) / 100;
 
-            // 3. Distribute
+            // 3. Distribute shares (Give remainder to the first person)
             const shares = selectedUsers.map((userId, index) => {
-                // Give the remainder pennies to the first person (usually the payer or random)
-                // Note: user's snippet logic:
                 const shareAmount = (index === 0) ? (baseSplit + remainder).toFixed(2) : baseSplit.toFixed(2);
                 return {
                     user_id: userId,
@@ -70,10 +68,10 @@ export default function AddExpenseScreen() {
             });
 
             const payload = {
-                description,
+                description: description,
                 amount: totalAmount,
                 category: 'OTHER',
-                shares
+                shares: shares
             };
 
             await client.post(`/expenses/groups/${group_id}/expenses/`, payload);
@@ -85,8 +83,7 @@ export default function AddExpenseScreen() {
             router.back();
         } catch (error: any) {
             console.error("Failed to add expense", error);
-            const errorMsg = error.response?.data?.error || "Failed to add expense. Please try again.";
-            Alert.alert("Error", errorMsg);
+            Alert.alert("Error", "Failed to add expense.");
         } finally {
             setIsSubmitting(false);
         }
