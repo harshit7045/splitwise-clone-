@@ -3,17 +3,25 @@ import { YStack, XStack, Text, Circle, Avatar, Button } from 'tamagui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Plus, ArrowLeft } from 'lucide-react-native';
 import { NeoCard } from '../../components/ui/NeoCard';
+import { useQuery } from '@tanstack/react-query';
+import client from '../../api/client';
+import { ActivityIndicator } from 'react-native';
 
 export default function GroupDetailScreen() {
     const { id } = useLocalSearchParams();
     const router = useRouter();
 
-    // Mock Expense Data
-    const expenses = [
-        { id: 1, description: 'Lunch', amount: 500, paidBy: 'rudra', paidById: 1, split: 'You owe ₹250' },
-        { id: 2, description: 'Uber', amount: 120, paidBy: 'alice', paidById: 2, split: 'You owe ₹60' },
-        { id: 3, description: 'Movie Tickets', amount: 800, paidBy: 'rudra', paidById: 1, split: 'You owe ₹400' },
-    ];
+    const { data: expensesData, isLoading } = useQuery({
+        queryKey: ['expenses', id],
+        queryFn: async () => {
+            const response = await client.get(`/expenses/groups/${id}/expenses/`);
+            return response.data.results;
+        }
+    });
+
+    if (isLoading) return <View style={{ flex: 1, backgroundColor: '#1E1E1E', justifyContent: 'center' }}><ActivityIndicator /></View>;
+
+    const expenses = expensesData || [];
 
     const currentUserId = 1; // Mock current user
 
@@ -35,7 +43,7 @@ export default function GroupDetailScreen() {
                 <YStack space="$4">
                     <Text textAlign="center" opacity={0.5} fontSize={12} color="$color">Today</Text>
 
-                    {expenses.map((expense) => {
+                    {expenses.map((expense: any) => {
                         const isMe = expense.paidById === currentUserId;
                         return (
                             <XStack key={expense.id} justifyContent={isMe ? 'flex-end' : 'flex-start'}>

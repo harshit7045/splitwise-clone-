@@ -24,10 +24,13 @@ class StandardResultsSetPagination(PageNumberPagination):
 # GROUP MANAGEMENT
 # ==========================================
 
-class GroupCreateView(generics.CreateAPIView):
-    queryset = Group.objects.all()
+class GroupListCreateView(generics.ListCreateAPIView):
     serializer_class = GroupSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # List groups where the current user is a member
+        return Group.objects.filter(members=self.request.user).order_by('-created_at')
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)

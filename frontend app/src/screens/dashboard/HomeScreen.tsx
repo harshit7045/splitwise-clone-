@@ -4,6 +4,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import client from '../../api/client';
+import { ActivityIndicator } from 'react-native';
 import { NeoCard } from '../../components/ui/NeoCard'; // Will create this next
 import { Bell, Plus } from 'lucide-react-native';
 
@@ -11,13 +12,18 @@ export default function DashboardScreen() {
     const { user } = useAuth();
     const router = useRouter();
 
-    // Mock data for now until API is live
-    const groups = [
-        { id: 1, name: 'Goa Trip 2025' },
-        { id: 2, name: 'Flat 302' },
-        { id: 3, name: 'Office Munchies' },
-    ];
+    // 1. Fetch Groups
+    const { data: groups, isLoading } = useQuery({
+        queryKey: ['groups'],
+        queryFn: async () => {
+            const response = await client.get('/expenses/groups/');
+            return response.data;
+        }
+    });
 
+    if (isLoading) return <View style={{ flex: 1, backgroundColor: '#1E1E1E', justifyContent: 'center', alignItems: 'center' }}><ActivityIndicator /></View>;
+
+    // Mock activities for now
     const activities = [
         { id: 101, description: 'Lunch at Cafe', amount: '100.00', paid_by: 'rudra', time: '2h ago' },
         { id: 102, description: 'Uber', amount: '450.00', paid_by: 'alice', time: '5h ago' },
@@ -54,7 +60,7 @@ export default function DashboardScreen() {
                         <Text fontSize={12} color="$color">New Squad</Text>
                     </YStack>
 
-                    {groups.map((group) => (
+                    {groups?.map((group: any) => (
                         <YStack key={group.id} alignItems="center" space="$2" onPress={() => router.push(`/group/${group.id}`)}>
                             <Circle size={70} backgroundColor="$secondary" borderWidth={2} borderColor="$color">
                                 <Text fontSize={24} top={2}>🏟️</Text>

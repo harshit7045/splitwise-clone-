@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { View, TextInput, ScrollView } from 'react-native';
 import { YStack, XStack, Text, Button, Circle, Avatar } from 'tamagui';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import client from '../../api/client';
 import { X } from 'lucide-react-native';
 import { NeoButton, NeoButtonText } from '../../components/ui/NeoButton';
 import { NeoInput } from '../../components/ui/NeoInput';
@@ -28,9 +29,32 @@ export default function AddExpenseScreen() {
         }
     };
 
-    const handleSplit = () => {
-        // Logic to post to API...
-        router.back();
+    const { group_id } = useLocalSearchParams();
+
+    const handleSplit = async () => {
+        try {
+            if (!amount || !description) return;
+
+            // Calculate split amount (simple equal split for now)
+            const splitAmount = (parseFloat(amount) / selectedUsers.length).toFixed(2);
+
+            const payload = {
+                description: description,
+                amount: parseFloat(amount),
+                category: 'OTHER', // Default category
+                shares: selectedUsers.map(userId => ({
+                    user_id: userId,
+                    amount: splitAmount
+                }))
+            };
+
+            await client.post(`/expenses/groups/${group_id}/expenses/`, payload);
+
+            router.back();
+        } catch (error) {
+            console.error("Failed to add expense", error);
+            alert("Failed to add expense");
+        }
     };
 
     return (
