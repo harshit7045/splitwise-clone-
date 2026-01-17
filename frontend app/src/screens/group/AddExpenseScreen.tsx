@@ -42,7 +42,7 @@ export default function AddExpenseScreen() {
 
     const handleSplit = async () => {
         if (!amount || !description || selectedUsers.length === 0) {
-            Alert.alert("Error", "Please enter amount, description, and select at least one person.");
+            Alert.alert("Error", "Fill all fields");
             return;
         }
 
@@ -51,32 +51,29 @@ export default function AddExpenseScreen() {
             const totalAmount = parseFloat(amount);
             const count = selectedUsers.length;
 
-            // --- ROUNDING FIX START ---
-            // 1. Base split (floor)
+            // 1. Calculate Base Split (floor)
             const baseSplit = Math.floor((totalAmount / count) * 100) / 100;
 
             // 2. Calculate Remainder
-            const totalDistributed = baseSplit * count;
-            const remainder = Math.round((totalAmount - totalDistributed) * 100); // e.g. 1 or 2 cents
+            const currentSum = baseSplit * count;
+            const remainder = Math.round((totalAmount - currentSum) * 100) / 100;
 
-            // 3. Distribute Shares
+            // 3. Distribute
             const shares = selectedUsers.map((userId, index) => {
-                let userShare = baseSplit;
-                if (index < remainder) {
-                    userShare = parseFloat((userShare + 0.01).toFixed(2));
-                }
+                // Give the remainder pennies to the first person (usually the payer or random)
+                // Note: user's snippet logic:
+                const shareAmount = (index === 0) ? (baseSplit + remainder).toFixed(2) : baseSplit.toFixed(2);
                 return {
                     user_id: userId,
-                    amount: userShare
+                    amount: shareAmount
                 };
             });
-            // --- ROUNDING FIX END ---
 
             const payload = {
-                description: description,
+                description,
                 amount: totalAmount,
                 category: 'OTHER',
-                shares: shares
+                shares
             };
 
             await client.post(`/expenses/groups/${group_id}/expenses/`, payload);
