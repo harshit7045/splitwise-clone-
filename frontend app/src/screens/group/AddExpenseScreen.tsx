@@ -13,7 +13,7 @@ export default function AddExpenseScreen() {
     const queryClient = useQueryClient();
     const [amount, setAmount] = useState('');
     const [description, setDescription] = useState('');
-    const [selectedUsers, setSelectedUsers] = useState<number[]>([]); // START EMPTY
+    const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const { group_id } = useLocalSearchParams();
@@ -25,7 +25,7 @@ export default function AddExpenseScreen() {
         enabled: !!group_id
     });
 
-    // 2. Auto-select all members once loaded (PREVENTS CRASH)
+    // 2. Auto-select all members
     useEffect(() => {
         if (isSuccess && members.length > 0) {
             setSelectedUsers(members.map((m: any) => m.id));
@@ -48,29 +48,48 @@ export default function AddExpenseScreen() {
 
         setIsSubmitting(true);
         try {
-            const splitAmount = (parseFloat(amount) / selectedUsers.length).toFixed(2);
+            const totalAmount = parseFloat(amount);
+            const count = selectedUsers.length;
+
+            // --- ROUNDING FIX START ---
+            // 1. Base split (floor)
+            const baseSplit = Math.floor((totalAmount / count) * 100) / 100;
+
+            // 2. Calculate Remainder
+            const totalDistributed = baseSplit * count;
+            const remainder = Math.round((totalAmount - totalDistributed) * 100); // e.g. 1 or 2 cents
+
+            // 3. Distribute Shares
+            const shares = selectedUsers.map((userId, index) => {
+                let userShare = baseSplit;
+                if (index < remainder) {
+                    userShare = parseFloat((userShare + 0.01).toFixed(2));
+                }
+                return {
+                    user_id: userId,
+                    amount: userShare
+                };
+            });
+            // --- ROUNDING FIX END ---
 
             const payload = {
                 description: description,
-                amount: parseFloat(amount),
+                amount: totalAmount,
                 category: 'OTHER',
-                shares: selectedUsers.map(userId => ({
-                    user_id: userId,
-                    amount: splitAmount
-                }))
+                shares: shares
             };
 
             await client.post(`/expenses/groups/${group_id}/expenses/`, payload);
 
-            // Invalidate queries to refresh previous screens
             queryClient.invalidateQueries({ queryKey: ['expenses'] });
             queryClient.invalidateQueries({ queryKey: ['globalBalance'] });
             queryClient.invalidateQueries({ queryKey: ['recentActivity'] });
 
             router.back();
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to add expense", error);
-            Alert.alert("Error", "Failed to add expense. Please try again.");
+            const errorMsg = error.response?.data?.error || "Failed to add expense. Please try again.";
+            Alert.alert("Error", errorMsg);
         } finally {
             setIsSubmitting(false);
         }

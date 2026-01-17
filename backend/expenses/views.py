@@ -71,7 +71,7 @@ class GroupMembersView(generics.ListAPIView):
 
     def get_queryset(self):
         group_id = self.kwargs['group_id']
-        return User.objects.filter(joined_groups__id=group_id)
+        return User.objects.filter(joined_groups__id=group_id, joined_groups__members=self.request.user).distinct()
 
 
 # ==========================================
@@ -141,43 +141,52 @@ class GroupBalanceView(views.APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, group_id):
-        my_id = request.user.id
-        
-        # SECURITY FIX: Check membership
+        # 1. Verification
         group = get_object_or_404(Group, id=group_id)
-        if not group.members.filter(id=my_id).exists():
-             return Response({"error": "Not authorized to view balance"}, status=status.HTTP_403_FORBIDDEN)
+        if not group.members.filter(id=request.user.id).exists():
+             return Response({"error": "Not a member"}, status=status.HTTP_403_FORBIDDEN)
 
-        # Get all other members
-        members = User.objects.filter(joined_groups__id=group_id).exclude(id=my_id)
-        balances = []
+        # 2. Optimized Calculation
+        # Fetch all splits where the user PAID
+        owed_to_me = ExpenseSplit.objects.filter(
+            expense__group=group,
+            expense__paid_by=request.user
+        ).exclude(user=request.user).values('user__username', 'user__id').annotate(total=Sum('amount'))
+
+        # Fetch all splits where the user OWES
+        b_owe_them = ExpenseSplit.objects.filter(
+            expense__group=group,
+            user=request.user
+        ).exclude(expense__paid_by=request.user).values('expense__paid_by__username', 'expense__paid_by__id').annotate(total=Sum('amount'))
         
-        for member in members:
-            # How much I paid for THEM (They owe me)
-            owed_to_me = ExpenseSplit.objects.filter(
-                expense__group_id=group_id,
-                expense__paid_by_id=my_id,
-                user_id=member.id
-            ).aggregate(Sum('amount'))['amount__sum'] or 0
+        # Merge results in Python
+        balances_map = {}
 
-            # How much THEY paid for ME (I owe them)
-            i_owe_them = ExpenseSplit.objects.filter(
-                expense__group_id=group_id,
-                expense__paid_by_id=member.id, 
-                user_id=my_id
-            ).aggregate(Sum('amount'))['amount__sum'] or 0
+        for item in owed_to_me:
+             uid = item['user__id']
+             name = item['user__username']
+             balances_map[uid] = {'name': name, 'amount': item['total']}
 
-            net_balance = owed_to_me - i_owe_them
-            
-            if net_balance != 0:
-                balances.append({
-                    "user": member.username,
-                    "user_id": member.id,
-                    "amount": net_balance,
-                    "status": "You are owed" if net_balance > 0 else "You owe"
-                })
+        for item in b_owe_them:
+             uid = item['expense__paid_by__id']
+             name = item['expense__paid_by__username']
+             current = balances_map.get(uid, {'name': name, 'amount': 0})
+             current['amount'] -= item['total']
+             balances_map[uid] = current
 
-        return Response(balances)
+        # Format
+        final_balances = []
+        for uid, data in balances_map.items():
+             net = data['amount']
+             if net != 0:
+                 final_balances.append({
+                     "user": data['name'],
+                     "user_id": uid,
+                     "amount": net,
+                     "status": "You are owed" if net > 0 else "You owe"
+                 })
+
+        return Response(final_balances)
 
 # --- NEW: Dashboard & Activity Views ---
 

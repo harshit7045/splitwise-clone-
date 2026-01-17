@@ -74,11 +74,20 @@ export default function DashboardScreen() {
                 <Text fontFamily="$heading" fontSize={18} marginBottom="$3" color="$color">YOUR SQUADS</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 30 }}>
                     <XStack space="$4">
+                        {/* CREATE BUTTON */}
                         <YStack alignItems="center" space="$2" onPress={() => router.push('/groups/create')}>
                             <Circle size={70} backgroundColor="$borderColor" borderWidth={2} borderColor="$primary" borderStyle='dashed' justifyContent='center' alignItems='center'>
                                 <Plus size={30} color="#D0FF48" />
                             </Circle>
                             <Text fontSize={12} color="$color">New Squad</Text>
+                        </YStack>
+
+                        {/* JOIN BUTTON (NEW) */}
+                        <YStack alignItems="center" space="$2" onPress={() => router.push('/groups/join')}>
+                            <Circle size={70} backgroundColor="#2B2D31" borderWidth={2} borderColor="$color" borderStyle='dashed' justifyContent='center' alignItems='center'>
+                                <Text fontSize={24}>🔗</Text>
+                            </Circle>
+                            <Text fontSize={12} color="$color">Join Squad</Text>
                         </YStack>
 
                         {groups?.map((group: any) => (
