@@ -80,12 +80,20 @@ export default function AddExpenseScreen() {
             queryClient.invalidateQueries({ queryKey: ['globalBalance'] });
             queryClient.invalidateQueries({ queryKey: ['recentActivity'] });
 
-            router.back();
+            // FIX: Explicit feedback + double-submit prevention
+            // Do NOT set isSubmitting(false) here. Keep it true to prevent double-clicks during navigation.
+            Alert.alert(
+                "Expense Added",
+                "Your expense has been split successfully! 💸",
+                [{ text: "OK", onPress: () => router.back() }]
+            );
         } catch (error: any) {
             console.error("Failed to add expense", error);
-            Alert.alert("Error", "Failed to add expense.");
+            const errorMsg = error.response?.data?.error || "Failed to add expense. Please try again.";
+            Alert.alert("Error", errorMsg);
+            setIsSubmitting(false); // Only re-enable on error
         } finally {
-            setIsSubmitting(false);
+            // Removed finally block to keep button disabled on success
         }
     };
 
