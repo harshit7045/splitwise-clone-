@@ -79,7 +79,7 @@ export default function GroupDetailScreen() {
                     backgroundColor="$primary"
                     elevation={10}
                     icon={<Plus size={30} color="black" />}
-                    onPress={() => router.push('/add-expense')}
+                    onPress={() => router.push({ pathname: '/add-expense', params: { group_id: id } })}
                 />
             </View>
         </View>

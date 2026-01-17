@@ -3,6 +3,7 @@ import { View, TextInput, ScrollView } from 'react-native';
 import { YStack, XStack, Text, Button, Circle, Avatar } from 'tamagui';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import client from '../../api/client';
+import { useQuery } from '@tanstack/react-query';
 import { X } from 'lucide-react-native';
 import { NeoButton, NeoButtonText } from '../../components/ui/NeoButton';
 import { NeoInput } from '../../components/ui/NeoInput';
@@ -13,13 +14,17 @@ export default function AddExpenseScreen() {
     const [description, setDescription] = useState('');
     const [selectedUsers, setSelectedUsers] = useState<number[]>([1, 2, 3]); // Default everyone selected
 
-    // Mock group members
-    const members = [
-        { id: 1, name: 'Rudra', initial: 'R' },
-        { id: 2, name: 'Alice', initial: 'A' },
-        { id: 3, name: 'Bob', initial: 'B' },
-        { id: 4, name: 'Charlie', initial: 'C' },
-    ];
+    const { group_id } = useLocalSearchParams();
+
+    // 1. Fetch Real Group Members
+    const { data: members = [] } = useQuery({
+        queryKey: ['members', group_id],
+        queryFn: async () => {
+            const response = await client.get(`/expenses/groups/${group_id}/members/`);
+            return response.data; // Backend returns [{id, username, name, email}, ...]
+        },
+        enabled: !!group_id // Only run if we have an ID
+    });
 
     const toggleUser = (id: number) => {
         if (selectedUsers.includes(id)) {
@@ -29,7 +34,7 @@ export default function AddExpenseScreen() {
         }
     };
 
-    const { group_id } = useLocalSearchParams();
+
 
     const handleSplit = async () => {
         try {
@@ -100,7 +105,7 @@ export default function AddExpenseScreen() {
                     <Text color="$color" fontFamily="$heading" fontSize={16}>SPLIT WITH</Text>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                         <XStack space="$4">
-                            {members.map(member => {
+                            {members.map((member: any) => {
                                 const isSelected = selectedUsers.includes(member.id);
                                 return (
                                     <YStack key={member.id} alignItems="center" space="$2" onPress={() => toggleUser(member.id)}>
@@ -110,9 +115,11 @@ export default function AddExpenseScreen() {
                                             borderWidth={2}
                                             borderColor={isSelected ? '$primary' : '$borderColor'}
                                         >
-                                            <Text fontSize={20} color={isSelected ? 'black' : 'white'} fontWeight="bold">{member.initial}</Text>
+                                            <Text fontSize={20} color={isSelected ? 'black' : 'white'} fontWeight="bold">
+                                                {member.name?.[0] || member.username?.[0]?.toUpperCase()}
+                                            </Text>
                                         </Circle>
-                                        <Text color="$color" opacity={isSelected ? 1 : 0.5} fontSize={12}>{member.name}</Text>
+                                        <Text color="$color" opacity={isSelected ? 1 : 0.5} fontSize={12}>{member.name || member.username}</Text>
                                     </YStack>
                                 )
                             })}
