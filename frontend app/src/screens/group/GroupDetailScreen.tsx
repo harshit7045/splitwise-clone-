@@ -93,15 +93,75 @@ export default function GroupDetailScreen() {
             {/* Content Switcher */}
             {showBalances ? (
                 <ScrollView contentContainerStyle={{ padding: 20 }}>
-                    <YStack space="$3">
-                        {balances?.length === 0 && <Text color="$color" opacity={0.5} textAlign='center'>No debts found.</Text>}
-                        {balances?.map((b: any) => (
-                            <XStack key={b.user_id} justifyContent="space-between" backgroundColor="#2B2D31" padding="$4" borderRadius={12} borderWidth={1} borderColor="$borderColor">
-                                <Text color="white" fontFamily="$body" fontSize={16}>{b.user}</Text>
-                                <Text color={b.status === "You are owed" ? "$primary" : "$error"} fontFamily="$heading">
-                                    {b.status === "You are owed" ? "gets" : "owes"} ₹{Math.abs(b.amount)}
+                    <YStack space="$4">
+                        {/* Summary Card */}
+                        {balances?.summary && (
+                            <NeoCard backgroundColor="#2B2D31" padding="$4" borderColor="$primary" borderWidth={2}>
+                                <Text fontSize={18} fontWeight="bold" color="$primary" marginBottom="$3">
+                                    💰 Group Summary
                                 </Text>
-                            </XStack>
+                                <YStack space="$2">
+                                    <XStack justifyContent="space-between">
+                                        <Text color="$color" opacity={0.8}>You owe the group:</Text>
+                                        <Text color="#FF6B6B" fontWeight="bold">₹{balances.summary.totalYouOwe}</Text>
+                                    </XStack>
+                                    <XStack justifyContent="space-between">
+                                        <Text color="$color" opacity={0.8}>Group owes you:</Text>
+                                        <Text color="#D0FF48" fontWeight="bold">₹{balances.summary.totalOwesYou}</Text>
+                                    </XStack>
+                                    <Separator marginVertical="$2" backgroundColor="#3A3D43" />
+                                    <XStack justifyContent="space-between">
+                                        <Text color="$color" fontWeight="bold">Net Balance:</Text>
+                                        <Text
+                                            color={balances.summary.netBalance >= 0 ? '#D0FF48' : '#FF6B6B'}
+                                            fontWeight="bold"
+                                            fontSize={18}
+                                        >
+                                            {balances.summary.netBalance >= 0 ? '+' : ''}₹{balances.summary.netBalance}
+                                        </Text>
+                                    </XStack>
+                                    <Text fontSize={12} opacity={0.6} color="$color" textAlign="center" marginTop="$2">
+                                        {balances.summary.netBalance > 0 ? 'You will receive' : balances.summary.netBalance < 0 ? 'You need to pay' : 'All settled up!'}
+                                    </Text>
+                                </YStack>
+                            </NeoCard>
+                        )}
+
+                        {/* Per-Member Breakdown */}
+                        {balances?.members?.length === 0 && (
+                            <Text color="$color" opacity={0.5} textAlign="center">No debts in this group</Text>
+                        )}
+
+                        {balances?.members?.map((member: any) => (
+                            <NeoCard key={member.userId} backgroundColor="#2B2D31" padding="$4" borderColor="$borderColor" borderWidth={1}>
+                                <Text fontSize={16} fontWeight="bold" color="$color" marginBottom="$3">
+                                    👤 {member.name}
+                                </Text>
+                                <YStack space="$2">
+                                    <XStack justifyContent="space-between">
+                                        <Text color="$color" opacity={0.7} fontSize={14}>You owe them:</Text>
+                                        <Text color={member.youOwe > 0 ? '#FF6B6B' : '$color'} fontWeight="600">₹{member.youOwe}</Text>
+                                    </XStack>
+                                    <XStack justifyContent="space-between">
+                                        <Text color="$color" opacity={0.7} fontSize={14}>They owe you:</Text>
+                                        <Text color={member.owesYou > 0 ? '#D0FF48' : '$color'} fontWeight="600">₹{member.owesYou}</Text>
+                                    </XStack>
+                                    <Separator marginVertical="$1" backgroundColor="#3A3D43" />
+                                    <XStack justifyContent="space-between">
+                                        <Text color="$color" fontSize={14} fontWeight="bold">Net:</Text>
+                                        <Text
+                                            color={member.netBalance >= 0 ? '#D0FF48' : '#FF6B6B'}
+                                            fontWeight="bold"
+                                        >
+                                            {member.netBalance > 0
+                                                ? `${member.name} owes you ₹${Math.abs(member.netBalance)}`
+                                                : member.netBalance < 0
+                                                    ? `You owe ₹${Math.abs(member.netBalance)}`
+                                                    : 'Settled up'}
+                                        </Text>
+                                    </XStack>
+                                </YStack>
+                            </NeoCard>
                         ))}
                     </YStack>
                 </ScrollView>

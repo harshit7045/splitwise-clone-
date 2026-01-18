@@ -102,81 +102,133 @@ const createExpense = async (req, res) => {
     }
 };
 
-
 // @desc    Get Group Balances
 // @route   GET /api/expenses/groups/:id/balances/
 const getGroupBalances = async (req, res) => {
     try {
         const groupId = req.params.id;
-        const currentUserId = req.user._id.toString();
-
         const group = await Group.findById(groupId).populate('members', 'name username');
         if (!group) return res.status(404).json({ error: 'Group not found' });
 
-        const expenses = await Expense.find({ group: groupId })
-            .populate('paid_by', 'name username')
-            .populate('shares.user', 'name username');
+        const expenses = await Expense.find({ group: groupId });
 
-        // Initialize bidirectional debt tracker: { userId: { youOwe, owesYou } }
-        const debts = {};
+        // Logic: Calculate Net Balance for each user
+        // + means "I am owed", - means "I owe"
+        let balances = {}; // { userId: { name, amount } }
+
+        // Initialize 0 for all members
         group.members.forEach(member => {
-            const memberId = member._id.toString();
-            if (memberId !== currentUserId) {
-                debts[memberId] = {
-                    userId: memberId,
-                    name: member.name || member.username,
-                    youOwe: 0,
-                    owesYou: 0,
-                    netBalance: 0
-                };
-            }
+            balances[member._id.toString()] = {
+                name: member.name || member.username,
+                amount: 0,
+                id: member._id
+            };
         });
 
-        // Calculate bidirectional debts from all expenses
-        expenses.forEach(expense => {
-            const payerId = expense.paid_by._id.toString();
+        // Iterate expenses
+        expenses.forEach(exp => {
+            const payerId = exp.paid_by.toString();
 
-            expense.shares.forEach(share => {
-                const shareUserId = share.user._id.toString();
-                const shareAmount = share.amount;
+            // Checking validation to ensure payer is in group map (robustness)
+            if (balances[payerId]) {
+                balances[payerId].amount += exp.amount;
+            }
 
-                if (payerId === currentUserId && shareUserId !== currentUserId) {
-                    // I paid, they owe me
-                    if (debts[shareUserId]) debts[shareUserId].owesYou += shareAmount;
-                } else if (payerId !== currentUserId && shareUserId === currentUserId) {
-                    // They paid, I owe them
-                    if (debts[payerId]) debts[payerId].youOwe += shareAmount;
+            // Subtract shares
+            exp.shares.forEach(share => {
+                const debtorId = share.user.toString();
+                if (balances[debtorId]) {
+                    balances[debtorId].amount -= share.amount;
                 }
             });
         });
 
-        // Calculate nets and totals
-        let totalYouOwe = 0;
-        let totalOwesYou = 0;
+        // Format for frontend
+        // Only valid if I am Viewer? The Django view calculated relative to "Me".
+        // Actually, the Django view returned a list of { user, amount, status } relative to Me.
+        // Wait, the Django logic was:
+        // "owed_to_me": filter(paid_by=Me).exclude(user=Me)
+        // "owe_them": filter(user=Me).exclude(paid_by=Me)
 
-        const memberBalances = Object.values(debts).map(debt => {
-            debt.youOwe = Math.round(debt.youOwe * 100) / 100;
-            debt.owesYou = Math.round(debt.owesYou * 100) / 100;
-            debt.netBalance = Math.round((debt.owesYou - debt.youOwe) * 100) / 100;
-            totalYouOwe += debt.youOwe;
-            totalOwesYou += debt.owesYou;
-            return debt;
-        }).filter(b => Math.abs(b.youOwe) > 0.01 || Math.abs(b.owesYou) > 0.01);
+        // This Node implementation above calculates global Net Balance for everyone in group.
+        // To match Django EXACTLY, we should filter relative to req.user.
 
-        res.json({
-            summary: {
-                totalYouOwe: Math.round(totalYouOwe * 100) / 100,
-                totalOwesYou: Math.round(totalOwesYou * 100) / 100,
-                netBalance: Math.round((totalOwesYou - totalYouOwe) * 100) / 100
-            },
-            members: memberBalances
+        const myId = req.user._id.toString();
+        const myNet = balances[myId] ? balances[myId].amount : 0; // This is my global net in the group.
+
+        // But wait, the UI shows "Harshit gets 100", "Alice owes 50".
+        // If the UI expects a list of balances for EVERYONE, my logic is correct.
+        // Let's check what Django returned.
+        // Django returned: [ { user: "Name", status: "You owe", amount: X } ]
+        // It calculated pairwise debt? No, it aggregated totals.
+        // "balances_map[uid]"...
+
+        // Let's refine the calculation to be simpler and match the general expectation.
+        // The list returned by Django seemed to be "Balances of other people relative to Me"?
+        // No, `GroupBalanceView` in Django returned a list of users and their net balances visible to the user.
+        // Actually, looking at previous code, it calculated `owed_to_me` and `b_owe_them`.
+        // That implies specific pairwise relationships or just net distinct sums.
+        // The Node logic above (Net Balance per person) is the standard Splitwise way.
+        // "Alice +10", "Bob -10".
+        // If the UI expects "You owe Bob 10", that's pairwise.
+        // If UI expects "Bob owes 10", that's Net.
+
+        // I will stick to the Net Balance calculation essentially.
+        // But I need to format it to: { user: Name, amount: Abs(Net), status: "You owe" / "You are owed" }?
+        // Wait, "You owe" implies a relationship to ME.
+        // If I use the Global Net approach: 
+        // If I am +100, and Bob is -100. It says "You are owed 100".
+        // If Bob is +50, I am -50. It says "You owe 50".
+        // The Django view calculated specifically `owed_to_me` (splits I paid for others) vs `owe_them` (splits others paid for me).
+        // That is technically "Net Balance with the Group", but derived from specific transactions involving ME.
+        // So effectively, it ignores transactions between Alice and Bob where I am not involved.
+
+        // CORRECT LOGIC TO MATCH DJANGO:
+        let myBalancesWithOthers = {}; // { otherUserId: netAmount }
+
+        expenses.forEach(exp => {
+            const payerId = exp.paid_by.toString();
+
+            if (payerId === myId) {
+                // I paid. Others owe me.
+                exp.shares.forEach(share => {
+                    const debtorId = share.user.toString();
+                    if (debtorId !== myId) {
+                        myBalancesWithOthers[debtorId] = (myBalancesWithOthers[debtorId] || 0) + share.amount;
+                    }
+                });
+            } else {
+                // Someone else paid. Did I participate?
+                const myShare = exp.shares.find(s => s.user.toString() === myId);
+                if (myShare) {
+                    // I owe the payer.
+                    myBalancesWithOthers[payerId] = (myBalancesWithOthers[payerId] || 0) - myShare.amount;
+                }
+            }
         });
+
+        let responseList = [];
+        for (const [uid, amount] of Object.entries(myBalancesWithOthers)) {
+            if (Math.abs(amount) > 0.01) {
+                const otherMember = group.members.find(m => m._id.toString() === uid);
+                const name = otherMember ? (otherMember.name || otherMember.username) : 'Unknown';
+
+                responseList.push({
+                    user: name,
+                    user_id: uid,
+                    amount: Math.abs(amount),
+                    status: amount > 0 ? "You are owed" : "You owe"
+                });
+            }
+        }
+
+        res.json(responseList);
+
     } catch (error) {
         console.error(error);
-        res.status(500).json({ error: 'Server Error' });
+        res.status(500).json({ error: error.message });
     }
 };
-
 
 // @desc    Get Global Balance
 // @route   GET /api/expenses/global-balance/
