@@ -13,7 +13,26 @@ export default function DashboardScreen() {
     const { user } = useAuth();
     const router = useRouter();
 
-    // ... queries ...
+    const { data: groups, isLoading: groupsLoading, refetch: refetchGroups } = useQuery({
+        queryKey: ['groups'],
+        queryFn: async () => (await client.get('/expenses/groups')).data
+    });
+
+    const { data: balance, refetch: refetchBalance } = useQuery({
+        queryKey: ['globalBalance'],
+        queryFn: async () => (await client.get('/expenses/global-balance')).data
+    });
+
+    const { data: activities = [], refetch: refetchActivities } = useQuery({
+        queryKey: ['recentActivity'],
+        queryFn: async () => (await client.get('/expenses/activity')).data
+    });
+
+    const onRefresh = React.useCallback(() => {
+        refetchGroups();
+        refetchBalance();
+        refetchActivities();
+    }, []);
 
     return (
         <View style={{ flex: 1, backgroundColor: '#1E1E1E', padding: 20, paddingTop: 60 }}>
