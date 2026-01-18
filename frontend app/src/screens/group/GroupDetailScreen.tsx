@@ -111,30 +111,72 @@ export default function GroupDetailScreen() {
                 >
                     {expenses.length === 0 && <Text color="$color" textAlign="center" opacity={0.5}>No expenses yet. Start spending!</Text>}
 
-                    <YStack space="$4">
+                    <YStack space="$3">
                         {expenses.map((expense: any) => {
-                            const isMe = expense.paid_by === user?.id; // CHECK REAL ID
-                            return (
-                                <XStack key={expense.id} justifyContent={isMe ? 'flex-end' : 'flex-start'}>
-                                    {!isMe && <Circle size={30} backgroundColor="gray" marginRight="$2"><Text>{expense.paid_by_name?.[0]}</Text></Circle>}
+                            const isMe = expense.paid_by === user?.id;
+                            const date = new Date(expense.created_at);
+                            const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
-                                    <YStack>
-                                        <NeoCard
-                                            maxWidth="80%"
-                                            backgroundColor={isMe ? '#2B2D31' : '#1E1E1E'}
-                                            borderColor={isMe ? '$primary' : '$borderColor'}
-                                            padding="$3"
-                                            borderTopRightRadius={isMe ? 4 : 16}
-                                            borderTopLeftRadius={!isMe ? 4 : 16}
-                                        >
-                                            <Text fontFamily="$heading" fontSize={16} color="$color">{expense.description}</Text>
-                                            <Text fontFamily="$heading" fontSize={24} color={isMe ? '$primary' : '$color'}>₹{expense.amount}</Text>
-                                            <Text fontSize={10} opacity={0.6} color="$color" marginTop="$1">
-                                                {isMe ? `Paid by you` : `Paid by ${expense.paid_by_name}`}
+                            return (
+                                <NeoCard
+                                    key={expense.id}
+                                    backgroundColor="#2B2D31"
+                                    borderColor={isMe ? '$primary' : '$borderColor'}
+                                    borderWidth={isMe ? 2 : 1}
+                                    padding="$4"
+                                >
+                                    {/* Header: Icon + Date */}
+                                    <XStack justifyContent="space-between" alignItems="center" marginBottom="$3">
+                                        <XStack alignItems="center" space="$2">
+                                            <Circle size={36} backgroundColor={isMe ? '$primary' : '$secondary'}>
+                                                <Text fontSize={16} color={isMe ? 'black' : 'white'}>
+                                                    {isMe ? '💳' : expense.paid_by_name?.[0] || '👤'}
+                                                </Text>
+                                            </Circle>
+                                            <YStack>
+                                                <Text fontSize={10} opacity={0.6} color="$color">{dateStr}</Text>
+                                            </YStack>
+                                        </XStack>
+                                        <YStack alignItems="flex-end">
+                                            <Text fontSize={20} fontWeight="bold" color={isMe ? '$primary' : '$color'}>₹{expense.amount}</Text>
+                                        </YStack>
+                                    </XStack>
+
+                                    {/* Description */}
+                                    <Text fontFamily="$heading" fontSize={16} color="$color" marginBottom="$2">
+                                        {expense.description}
+                                    </Text>
+
+                                    <Separator marginVertical="$2" backgroundColor="#3A3D43" />
+
+                                    {/* Payer Info */}
+                                    <XStack justifyContent="space-between" alignItems="center">
+                                        <Text fontSize={14} opacity={0.8} color="$color">
+                                            {isMe ? 'You paid' : `${expense.paid_by_name} paid`}
+                                        </Text>
+                                        {expense.shares && expense.shares.length > 1 && (
+                                            <Text fontSize={12} opacity={0.6} color="$color">
+                                                Split {expense.shares.length} ways
                                             </Text>
-                                        </NeoCard>
-                                    </YStack>
-                                </XStack>
+                                        )}
+                                    </XStack>
+
+                                    {/* Show split details if available */}
+                                    {expense.shares && expense.shares.length > 0 && (
+                                        <YStack marginTop="$2" space="$1">
+                                            {expense.shares.map((share: any, idx: number) => (
+                                                <XStack key={idx} justifyContent="space-between" paddingVertical="$1">
+                                                    <Text fontSize={12} opacity={0.7} color="$color">
+                                                        • User {idx + 1}
+                                                    </Text>
+                                                    <Text fontSize={12} opacity={0.7} color="$color">
+                                                        ₹{share.amount}
+                                                    </Text>
+                                                </XStack>
+                                            ))}
+                                        </YStack>
+                                    )}
+                                </NeoCard>
                             );
                         })}
                     </YStack>
