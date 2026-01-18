@@ -113,8 +113,10 @@ export default function GroupDetailScreen() {
 
                     <YStack space="$3">
                         {expenses.map((expense: any) => {
+                            if (!expense || !expense.id) return null;
+
                             const isMe = expense.paid_by === user?.id;
-                            const date = new Date(expense.created_at);
+                            const date = expense.created_at ? new Date(expense.created_at) : new Date();
                             const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
                             return (
@@ -138,13 +140,13 @@ export default function GroupDetailScreen() {
                                             </YStack>
                                         </XStack>
                                         <YStack alignItems="flex-end">
-                                            <Text fontSize={20} fontWeight="bold" color={isMe ? '$primary' : '$color'}>₹{expense.amount}</Text>
+                                            <Text fontSize={20} fontWeight="bold" color={isMe ? '$primary' : '$color'}>₹{expense.amount || 0}</Text>
                                         </YStack>
                                     </XStack>
 
                                     {/* Description */}
                                     <Text fontFamily="$heading" fontSize={16} color="$color" marginBottom="$2">
-                                        {expense.description}
+                                        {expense.description || 'No description'}
                                     </Text>
 
                                     <Separator marginVertical="$2" backgroundColor="#3A3D43" />
@@ -152,7 +154,7 @@ export default function GroupDetailScreen() {
                                     {/* Payer Info */}
                                     <XStack justifyContent="space-between" alignItems="center">
                                         <Text fontSize={14} opacity={0.8} color="$color">
-                                            {isMe ? 'You paid' : `${expense.paid_by_name} paid`}
+                                            {isMe ? 'You paid' : `${expense.paid_by_name || 'Someone'} paid`}
                                         </Text>
                                         {expense.shares && expense.shares.length > 1 && (
                                             <Text fontSize={12} opacity={0.6} color="$color">
@@ -164,16 +166,21 @@ export default function GroupDetailScreen() {
                                     {/* Show split details if available */}
                                     {expense.shares && expense.shares.length > 0 && (
                                         <YStack marginTop="$2" space="$1">
-                                            {expense.shares.map((share: any, idx: number) => (
+                                            {expense.shares.slice(0, 3).map((share: any, idx: number) => (
                                                 <XStack key={idx} justifyContent="space-between" paddingVertical="$1">
                                                     <Text fontSize={12} opacity={0.7} color="$color">
-                                                        • User {idx + 1}
+                                                        • Split {idx + 1}
                                                     </Text>
                                                     <Text fontSize={12} opacity={0.7} color="$color">
-                                                        ₹{share.amount}
+                                                        ₹{share.amount || 0}
                                                     </Text>
                                                 </XStack>
                                             ))}
+                                            {expense.shares.length > 3 && (
+                                                <Text fontSize={11} opacity={0.5} color="$color">
+                                                    + {expense.shares.length - 3} more
+                                                </Text>
+                                            )}
                                         </YStack>
                                     )}
                                 </NeoCard>
