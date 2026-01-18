@@ -41,10 +41,23 @@ const createExpense = async (req, res) => {
     const { description, amount, category, shares, splitType, splitDetails } = req.body;
     const groupId = req.params.id;
 
-    // Validation for Percentage Splits (User Request)
+    // 1. Basic Field Validation
+    if (!description || description.trim() === '') {
+        return res.status(400).json({ error: 'Description is required' });
+    }
+
+    if (!amount || amount <= 0) {
+        return res.status(400).json({ error: 'Amount must be greater than zero' });
+    }
+
+    if (!shares || shares.length === 0) {
+        return res.status(400).json({ error: 'At least one person must be selected for split' });
+    }
+
+    // 2. Validation for Percentage Splits
     if (splitType === 'PERCENTAGE' && splitDetails) {
         const totalPercent = splitDetails.reduce((acc, curr) => acc + curr.share, 0);
-        if (Math.abs(totalPercent - 100) > 0.01) { // Float safety
+        if (Math.abs(totalPercent - 100) > 0.01) {
             return res.status(400).json({ error: 'Percentages must equal 100' });
         }
     }

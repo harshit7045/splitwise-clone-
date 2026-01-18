@@ -43,20 +43,25 @@ const joinGroup = async (req, res) => {
         const group = await Group.findById(req.params.id);
 
         if (!group) {
-            return res.status(404).json({ error: 'Group not found' });
+            return res.status(404).json({ error: 'Group not found with this ID' });
         }
 
         // Check if already member
         if (group.members.includes(req.user._id)) {
-            return res.json({ message: 'Already a member' });
+            return res.status(400).json({ error: 'You are already a member of this group' });
         }
 
         group.members.push(req.user._id);
         await group.save();
 
-        res.json({ message: 'Joined group successfully' });
+        res.json({ message: 'Joined group successfully', group: formatGroup(group) });
     } catch (error) {
-        res.status(404).json({ error: 'Group not found (Invalid ID)' });
+        // Handle CastError (Invalid ObjectId format like "abc123")
+        if (error.name === 'CastError') {
+            return res.status(400).json({ error: 'Invalid Group ID format' });
+        }
+        console.error(error);
+        res.status(500).json({ error: 'Server error while joining group' });
     }
 };
 

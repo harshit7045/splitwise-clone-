@@ -21,4 +21,18 @@ client.interceptors.request.use(async (config) => {
     return config;
 });
 
+// Response interceptor to handle 401 (Unauthorized) errors
+client.interceptors.response.use(
+    response => response,
+    async error => {
+        if (error.response?.status === 401) {
+            // Token expired or invalid - clear storage and redirect to login
+            await storage.deleteItem('user_token');
+            await storage.deleteItem('user_info');
+            // Note: Navigation will be handled by auth state change in useAuth
+        }
+        return Promise.reject(error);
+    }
+);
+
 export default client;

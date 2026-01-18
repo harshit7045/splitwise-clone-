@@ -31,30 +31,56 @@ const authUser = async (req, res) => {
 // @desc    Register a new user
 // @route   POST /api/auth/register
 const registerUser = async (req, res) => {
-    const { name, username, email, password } = req.body;
+    try {
+        const { name, username, email, password } = req.body;
 
-    const userExists = await User.findOne({ username });
+        // 1. Basic Validation
+        if (!name || !username || !email || !password) {
+            return res.status(400).json({ error: 'Please provide all fields' });
+        }
 
-    if (userExists) {
-        return res.status(400).json({ error: 'User already exists' });
-    }
+        // 2. Check for existing username
+        const userExists = await User.findOne({ username });
+        if (userExists) {
+            return res.status(409).json({ error: 'Username already taken' });
+        }
 
-    const user = await User.create({
-        name,
-        username,
-        email,
-        password
-    });
+        // 3. Check for existing email
+        const emailExists = await User.findOne({ email });
+        if (emailExists) {
+            return res.status(409).json({ error: 'Email already registered' });
+        }
 
-    if (user) {
-        res.status(201).json({
-            _id: user._id,
-            name: user.name,
-            username: user.username,
-            token: generateToken(user._id)
+        const user = await User.create({
+            name,
+            username,
+            email,
+            password
         });
-    } else {
-        res.status(400).json({ error: 'Invalid user data' });
+
+        if (user) {
+            res.status(201).json({
+                _id: user._id,
+                name: user.name,
+                username: user.username,
+                email: user.email,
+                token: generateToken(user._id)
+            });
+        } else {
+            res.status(400).json({ error: 'Invalid user data' });
+        }
+    } catch (error) {
+        // 4. Handle MongoDB Duplicate Key Error (E11000)
+        if (error.code === 11000) {
+            const field = Object.keys(error.keyPattern)[0];
+            return res.status(409).json({ error: `${field} already exists` });
+        }
+        // 5. Handle Validation Errors
+        if (error.name === 'ValidationError') {
+            const messages = Object.values(error.errors).map(val => val.message);
+            return res.status(400).json({ error: messages.join(', ') });
+        }
+        res.status(500).json({ error: 'Server error during registration' });
     }
 };
 

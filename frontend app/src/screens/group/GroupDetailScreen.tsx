@@ -18,19 +18,19 @@ export default function GroupDetailScreen() {
     // 1. Fetch Expenses
     const { data: expensesData, isLoading: expensesLoading, refetch: refetchExpenses } = useQuery({
         queryKey: ['expenses', id],
-        queryFn: async () => (await client.get(`/expenses/groups/${id}/expenses/`)).data
+        queryFn: async () => (await client.get(`/expenses/groups/${id}/expenses`)).data
     });
 
     // 2. Fetch Group Details (Name)
     const { data: groupData, isLoading: groupLoading } = useQuery({
         queryKey: ['group', id],
-        queryFn: async () => (await client.get(`/expenses/groups/${id}/`)).data
+        queryFn: async () => (await client.get(`/expenses/groups/${id}`)).data
     });
 
     // 3. Fetch Balances (Lazy load)
     const { data: balances } = useQuery({
         queryKey: ['balances', id],
-        queryFn: async () => (await client.get(`/expenses/groups/${id}/balances/`)).data,
+        queryFn: async () => (await client.get(`/expenses/groups/${id}/balances`)).data,
         enabled: showBalances
     });
 

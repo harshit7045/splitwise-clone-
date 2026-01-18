@@ -30,12 +30,15 @@ export default function RegisterScreen() {
 
     const onSubmit = async (data: RegisterFormData) => {
         try {
+            setError(''); // Clear previous errors
             const response = await client.post('/auth/register', data);
             await login(response.data, response.data.token);
             router.replace('/(tabs)');
         } catch (err: any) {
             console.error(err);
-            setError('Registration failed');
+            // Capture the backend error message
+            const errorMessage = err.response?.data?.error || 'Registration failed. Please try again.';
+            setError(errorMessage);
         }
     };
 
