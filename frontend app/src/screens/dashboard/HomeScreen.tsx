@@ -28,7 +28,10 @@ export default function DashboardScreen() {
                 </Circle>
             </XStack>
 
-            <ScrollView refreshControl={<RefreshControl refreshing={groupsLoading} onRefresh={onRefresh} tintColor="#D0FF48" />}>
+            <ScrollView
+                refreshControl={<RefreshControl refreshing={groupsLoading} onRefresh={onRefresh} tintColor="#D0FF48" />}
+                showsVerticalScrollIndicator={false}
+            >
                 {/* Global Balance Card */}
                 <YStack backgroundColor="#2B2D31" borderRadius={16} padding="$5" marginBottom="$6">
                     <Text color="$color" opacity={0.7} marginBottom="$2">Total Balance</Text>
@@ -46,77 +49,63 @@ export default function DashboardScreen() {
                         </YStack>
                     </XStack>
                 </YStack>
-            </ScrollView>
-            showsVerticalScrollIndicator={false}
-            refreshControl={<RefreshControl refreshing={false} onRefresh={onRefresh} tintColor="#D0FF48" />}
-            >
-            {/* Global Balance Card (REAL DATA) */}
-            <YStack backgroundColor="#2B2D31" padding="$4" borderRadius={16} borderWidth={1} borderColor="$borderColor" marginBottom="$6">
-                <Text color="$color" opacity={0.6}>Total Balance</Text>
-                <Text color={balance?.total_balance >= 0 ? "$primary" : "$error"} fontFamily="$heading" fontSize={42}>
-                    ₹ {balance?.total_balance || 0}
-                </Text>
-                <Text color="$color" fontSize={12} marginTop="$2">
-                    You are owed <Text color="$primary">₹{balance?.owed_to_you || 0}</Text> & owe <Text color="$error">₹{balance?.you_owe || 0}</Text>
-                </Text>
-            </YStack>
 
-            {/* Squads Rail */}
-            <Text fontFamily="$heading" fontSize={18} marginBottom="$3" color="$color">YOUR SQUADS</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 30 }}>
-                <XStack space="$4">
-                    {/* CREATE BUTTON */}
-                    <YStack alignItems="center" space="$2" onPress={() => router.push('/groups/create')}>
-                        <Circle size={70} backgroundColor="$borderColor" borderWidth={2} borderColor="$primary" borderStyle='dashed' justifyContent='center' alignItems='center'>
-                            <Plus size={30} color="#D0FF48" />
-                        </Circle>
-                        <Text fontSize={12} color="$color">New Squad</Text>
-                    </YStack>
-
-                    {/* JOIN BUTTON (NEW) */}
-                    <YStack alignItems="center" space="$2" onPress={() => router.push('/groups/join')}>
-                        <Circle size={70} backgroundColor="#2B2D31" borderWidth={2} borderColor="$color" justifyContent='center' alignItems='center'>
-                            <Text fontSize={24}>🔗</Text>
-                        </Circle>
-                        <Text fontSize={12} color="$color">Join Squad</Text>
-                    </YStack>
-
-                    {groups?.map((group: any) => (
-                        <YStack key={group.id} alignItems="center" space="$2" onPress={() => router.push(`/group/${group.id}`)}>
-                            <Circle size={70} backgroundColor="$secondary" borderWidth={2} borderColor="$color">
-                                <Text fontSize={24} top={2}>🏟️</Text>
+                {/* Squads Rail */}
+                <Text fontFamily="$heading" fontSize={18} marginBottom="$3" color="$color">YOUR SQUADS</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 30 }}>
+                    <XStack space="$4">
+                        {/* CREATE BUTTON */}
+                        <YStack alignItems="center" space="$2" onPress={() => router.push('/groups/create')}>
+                            <Circle size={70} backgroundColor="$borderColor" borderWidth={2} borderColor="$primary" borderStyle='dashed' justifyContent='center' alignItems='center'>
+                                <Plus size={30} color="#D0FF48" />
                             </Circle>
-                            <Text fontSize={12} color="$color" maxWidth={70} numberOfLines={1}>{group.name}</Text>
+                            <Text fontSize={12} color="$color">New Squad</Text>
                         </YStack>
-                    ))}
-                </XStack>
-            </ScrollView>
 
-            {/* Recent Activity (REAL DATA) */}
-            <Text fontFamily="$heading" fontSize={18} marginBottom="$3" color="$color">RECENT DROPS</Text>
-            <YStack space="$3" paddingBottom="$10">
-                {activities.length === 0 ? (
-                    <Text color="$color" opacity={0.5}>No expenses yet.</Text>
-                ) : (
-                    activities.map((activity: any) => (
-                        <XStack key={activity.id} backgroundColor="#2B2D31" padding="$3" borderRadius={12} alignItems="center" justifyContent="space-between">
-                            <XStack space="$3" alignItems="center">
-                                <Circle size={40} backgroundColor="$primary" opacity={0.2}><Text>💸</Text></Circle>
-                                <YStack>
-                                    <Text color="$color" fontWeight="bold">{activity.description}</Text>
-                                    <Text color="$color" fontSize={12} opacity={0.6}>
-                                        {activity.paid_by_name} paid • {new Date(activity.created_at).toLocaleDateString()}
-                                    </Text>
-                                </YStack>
+                        {/* JOIN BUTTON (NEW) */}
+                        <YStack alignItems="center" space="$2" onPress={() => router.push('/groups/join')}>
+                            <Circle size={70} backgroundColor="#2B2D31" borderWidth={2} borderColor="$color" justifyContent='center' alignItems='center'>
+                                <Text fontSize={24}>🔗</Text>
+                            </Circle>
+                            <Text fontSize={12} color="$color">Join Squad</Text>
+                        </YStack>
+
+                        {groups?.map((group: any) => (
+                            <YStack key={group.id} alignItems="center" space="$2" onPress={() => router.push(`/group/${group.id}`)}>
+                                <Circle size={70} backgroundColor="$secondary" borderWidth={2} borderColor="$color">
+                                    <Text fontSize={24} top={2}>🏟️</Text>
+                                </Circle>
+                                <Text fontSize={12} color="$color" maxWidth={70} numberOfLines={1}>{group.name}</Text>
+                            </YStack>
+                        ))}
+                    </XStack>
+                </ScrollView>
+
+                {/* Recent Activity (REAL DATA) */}
+                <Text fontFamily="$heading" fontSize={18} marginBottom="$3" color="$color">RECENT DROPS</Text>
+                <YStack space="$3" paddingBottom="$10">
+                    {activities.length === 0 ? (
+                        <Text color="$color" opacity={0.5}>No expenses yet.</Text>
+                    ) : (
+                        activities.map((activity: any) => (
+                            <XStack key={activity.id} backgroundColor="#2B2D31" padding="$3" borderRadius={12} alignItems="center" justifyContent="space-between">
+                                <XStack space="$3" alignItems="center">
+                                    <Circle size={40} backgroundColor="$primary" opacity={0.2}><Text>💸</Text></Circle>
+                                    <YStack>
+                                        <Text color="$color" fontWeight="bold">{activity.description}</Text>
+                                        <Text color="$color" fontSize={12} opacity={0.6}>
+                                            {activity.paid_by_name} paid • {new Date(activity.created_at).toLocaleDateString()}
+                                        </Text>
+                                    </YStack>
+                                </XStack>
+                                <Text color="$primary" fontFamily="$body" fontWeight="bold">
+                                    ₹{activity.amount}
+                                </Text>
                             </XStack>
-                            <Text color="$primary" fontFamily="$body" fontWeight="bold">
-                                ₹{activity.amount}
-                            </Text>
-                        </XStack>
-                    ))
-                )}
-            </YStack>
-        </ScrollView>
+                        ))
+                    )}
+                </YStack>
+            </ScrollView>
         </View >
     );
 }
