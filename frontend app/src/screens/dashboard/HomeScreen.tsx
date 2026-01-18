@@ -23,10 +23,12 @@ export default function DashboardScreen() {
         queryFn: async () => (await client.get('/expenses/global-balance')).data
     });
 
-    const { data: activities = [], refetch: refetchActivities } = useQuery({
+    const { data: activitiesData, refetch: refetchActivities } = useQuery({
         queryKey: ['recentActivity'],
         queryFn: async () => (await client.get('/expenses/activity')).data
     });
+
+    const activities = activitiesData?.results || [];
 
     const onRefresh = React.useCallback(() => {
         refetchGroups();
