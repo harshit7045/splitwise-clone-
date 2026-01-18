@@ -66,6 +66,8 @@ export default function RootLayout() {
               <Stack.Screen name="group/[id]" options={{ headerShown: false }} />
               <Stack.Screen name="login" options={{ headerShown: false }} />
               <Stack.Screen name="register" options={{ headerShown: false }} />
+              <Stack.Screen name="groups/create" options={{ headerShown: false }} />
+              <Stack.Screen name="groups/join" options={{ headerShown: false }} />
             </Stack>
           )}
         </Theme>
