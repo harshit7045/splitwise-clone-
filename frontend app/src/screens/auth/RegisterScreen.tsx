@@ -30,7 +30,7 @@ export default function RegisterScreen() {
 
     const onSubmit = async (data: RegisterFormData) => {
         try {
-            const response = await client.post('/users/register/', data);
+            const response = await client.post('/auth/register', data);
             await login(response.data, response.data.token);
             router.replace('/(tabs)');
         } catch (err: any) {
