@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { View, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
 import { YStack, Text, XStack } from 'tamagui';
 import { useForm, Controller } from 'react-hook-form';
 import { useRouter } from 'expo-router';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { Eye, EyeOff } from 'lucide-react-native';
 import { NeoInput } from '../../components/ui/NeoInput';
 import { NeoButton, NeoButtonText } from '../../components/ui/NeoButton';
 import { useAuth } from '../../hooks/useAuth';
@@ -23,6 +24,7 @@ export default function RegisterScreen() {
     const router = useRouter();
     const { login } = useAuth();
     const [error, setError] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
 
     const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<RegisterFormData>({
         resolver: zodResolver(registerSchema),
@@ -78,7 +80,24 @@ export default function RegisterScreen() {
                         control={control}
                         name="password"
                         render={({ field: { onChange, value } }) => (
-                            <NeoInput placeholder="Password" value={value} onChangeText={onChange} secureTextEntry error={errors.password?.message} />
+                            <View style={{ position: 'relative' }}>
+                                <NeoInput
+                                    placeholder="Password (min 6 characters)"
+                                    value={value}
+                                    onChangeText={onChange}
+                                    secureTextEntry={!showPassword}
+                                    error={errors.password?.message}
+                                />
+                                <TouchableOpacity
+                                    onPress={() => setShowPassword(!showPassword)}
+                                    style={{ position: 'absolute', right: 15, top: 17 }}
+                                >
+                                    {showPassword ?
+                                        <EyeOff size={20} color="#888" /> :
+                                        <Eye size={20} color="#888" />
+                                    }
+                                </TouchableOpacity>
+                            </View>
                         )}
                     />
                     {error ? <Text color="$error" textAlign='center'>{error}</Text> : null}

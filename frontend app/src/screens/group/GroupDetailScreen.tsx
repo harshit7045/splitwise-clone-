@@ -168,130 +168,111 @@ export default function GroupDetailScreen() {
             ) : (
                 <ScrollView
                     contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
-                    refreshControl={<RefreshControl refreshing={false} onRefresh={onRefresh} tintColor="#D0FF48" />}
+                    refreshControl={<RefreshControl refreshing={expensesLoading} onRefresh={() => refetchExpenses()} tintColor="#D0FF48" />}
                 >
-                    {expenses.length === 0 && <Text color="$color" textAlign="center" opacity={0.5}>No expenses yet. Start spending!</Text>}
-
                     <YStack space="$3">
-                        {expenses.map((expense: any) => {
-                            if (!expense || !expense.id) return null;
+                        {!expenses || expenses.length === 0 ? (
+                            <YStack alignItems="center" padding="$8" space="$3">
+                                <Text fontSize={64}>💸</Text>
+                                <Text color="#D0FF48" fontSize={18} fontWeight="bold">No Expenses Yet</Text>
+                                <Text color="$color" opacity={0.6} textAlign="center">
+                                    Tap the "+" button below to add your first expense and start splitting!
+                                </Text>
+                            </YStack>
+                        ) : (
+                            expenses.map((expense: any) => {
+                                if (!expense || !expense.id) return null;
 
-                            const isMe = expense.paid_by === user?.id;
-                            const date = expense.created_at ? new Date(expense.created_at) : new Date();
-                            const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                                const isMe = expense.paid_by === user?.id;
+                                const date = expense.created_at ? new Date(expense.created_at) : new Date();
+                                const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
-                            return (
-                                <NeoCard
-                                    key={expense.id}
-                                    backgroundColor="#2B2D31"
-                                    borderColor={isMe ? '$primary' : '$borderColor'}
-                                    borderWidth={isMe ? 2 : 1}
-                                    padding="$4"
-                                >
-                                    {/* Header: Icon + Date */}
-                                    <XStack justifyContent="space-between" alignItems="center" marginBottom="$3">
-                                        <XStack alignItems="center" space="$2">
-                                            <Circle size={36} backgroundColor={isMe ? '$primary' : '$secondary'}>
-                                                <Text fontSize={16} color={isMe ? 'black' : 'white'}>
-                                                    {isMe ? '💳' : expense.paid_by_name?.[0] || '👤'}
+                                return (
+                                    <NeoCard
+                                        key={expense.id}
+                                        backgroundColor="#2B2D31"
+                                        borderColor={isMe ? '$primary' : '$borderColor'}
+                                        borderWidth={isMe ? 2 : 1}
+                                        padding="$4"
+                                    >
+                                        {/* Header: Icon + Date */}
+                                        <XStack justifyContent="space-between" alignItems="center" marginBottom="$3">
+                                            <XStack alignItems="center" space="$2">
+                                                <Circle size={36} backgroundColor={isMe ? '$primary' : '$secondary'}>
+                                                    <Text fontSize={16} color={isMe ? 'black' : 'white'}>
+                                                        {isMe ? '💳' : expense.paid_by_name?.[0] || '👤'}
+                                                    </Text>
+                                                </Circle>
+                                                <YStack>
+                                                    <Text fontSize={10} opacity={0.6} color="$color">{dateStr}</Text>
+                                                    <Text fontSize={12} fontWeight="600" color="$color">
+                                                        {isMe ? 'You paid' : `${expense.paid_by_name || 'Someone'} paid`}
+                                                    </Text>
+                                                </YStack>
+                                            </XStack>
+                                            <YStack alignItems="flex-end">
+                                                <Text fontSize={18} fontWeight="bold" color={isMe ? '$primary' : '$color'}>
+                                                    ₹{expense.amount || 0}
                                                 </Text>
-                                            </Circle>
-                                            <YStack>
-                                                <Text fontSize={10} opacity={0.6} color="$color">{dateStr}</Text>
+                                                <Text fontSize={10} opacity={0.5} color="$color">
+                                                    Split {expense.shares?.length || 0} ways
+                                                </Text>
                                             </YStack>
                                         </XStack>
-                                        <YStack alignItems="flex-end">
-                                            <Text fontSize={20} fontWeight="bold" color={isMe ? '$primary' : '$color'}>₹{expense.amount || 0}</Text>
-                                        </YStack>
-                                    </XStack>
-
-                                    {/* Description */}
-                                    <Text fontFamily="$heading" fontSize={16} color="$color" marginBottom="$2">
-                                        {expense.description || 'No description'}
-                                    </Text>
-
-                                    <Separator marginVertical="$2" backgroundColor="#3A3D43" />
-
-                                    {/* Payer Info */}
-                                    <XStack justifyContent="space-between" alignItems="center">
-                                        <Text fontSize={14} opacity={0.8} color="$color">
-                                            {isMe ? 'You paid' : `${expense.paid_by_name || 'Someone'} paid`}
-                                        </Text>
-                                        {expense.shares && expense.shares.length > 1 && (
-                                            <Text fontSize={12} opacity={0.6} color="$color">
-                                                Split {expense.shares.length} ways
-                                            </Text>
-                                        )}
-                                    </XStack>
-
-                                    {/* Show split details if available */}
-                                    {expense.shares && expense.shares.length > 0 && (
-                                        <YStack marginTop="$2" space="$1">
-                                            {expense.shares.slice(0, 3).map((share: any, idx: number) => (
-                                                <XStack key={idx} justifyContent="space-between" paddingVertical="$1">
-                                                    <Text fontSize={12} opacity={0.7} color="$color">
-                                                        • {share.user?.name || share.user?.username || `User ${idx + 1}`}
-                                                    </Text>
-                                                    <Text fontSize={12} opacity={0.7} color="$color">
-                                                        ₹{share.amount || 0}
-                                                    </Text>
-                                                </XStack>
-                                            ))}
-                                            {expense.shares.length > 3 && (
-                                                <Text fontSize={11} opacity={0.5} color="$color">
-                                                    + {expense.shares.length - 3} more
-                                                </Text>
-                                            )}
-                                        </YStack>
-                                    )}
-                                </NeoCard>
-                            );
-                        })}
-                    </YStack>
-                </ScrollView>
-            )}
-
-            {/* FAB (Only show when not in balances mode) */}
-            {!showBalances && (
-                <View style={{ position: 'absolute', bottom: 30, right: 20 }}>
-                    <Button
-                        size="$6"
-                        circular
-                        backgroundColor="$primary"
-                        elevation={10}
-                        icon={<Plus size={30} color="black" />}
-                        onPress={() => router.push({ pathname: '/add-expense', params: { group_id: id } })}
-                    />
-                </View>
-            )}
-
-            {/* Members Modal */}
-            <Modal visible={showMembers} animationType="slide" transparent={true} onRequestClose={() => setShowMembers(false)}>
-                <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
-                    <View style={{ backgroundColor: '#1E1E1E', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, maxHeight: '60%' }}>
-                        <XStack justifyContent="space-between" alignItems="center" marginBottom="$4">
-                            <Text fontSize={20} fontWeight="bold" color="$color">Group Members</Text>
-                            <TouchableOpacity onPress={() => setShowMembers(false)}>
-                                <X size={24} color="white" />
-                            </TouchableOpacity>
-                        </XStack>
-
-                        <ScrollView>
-                            {groupData?.members?.map((member: any) => (
-                                <XStack key={member.id || member._id} paddingVertical="$3" alignItems="center" space="$3" borderBottomWidth={1} borderColor="#2B2D31">
-                                    <Circle size={40} backgroundColor="$secondary">
-                                        <Text fontSize={18} color="white">{member.name?.[0] || member.username?.[0]}</Text>
-                                    </Circle>
-                                    <YStack>
-                                        <Text fontSize={16} fontWeight="600" color="$color">{member.name || member.username}</Text>
-                                        <Text fontSize={12} color="$gray10">{member.email}</Text>
                                     </YStack>
-                                </XStack>
-                            )) || <Text color="$gray10">No members found</Text>}
-                        </ScrollView>
-                    </View>
-                </View>
-            </Modal>
+                                )
+                            }
+                        </NeoCard>
+                    );
+                        })}
+                </YStack>
+                </ScrollView>
+    )
+}
+
+{/* FAB (Only show when not in balances mode) */ }
+{
+    !showBalances && (
+        <View style={{ position: 'absolute', bottom: 30, right: 20 }}>
+            <Button
+                size="$6"
+                circular
+                backgroundColor="$primary"
+                elevation={10}
+                icon={<Plus size={30} color="black" />}
+                onPress={() => router.push({ pathname: '/add-expense', params: { group_id: id } })}
+            />
         </View>
+    )
+}
+
+{/* Members Modal */ }
+<Modal visible={showMembers} animationType="slide" transparent={true} onRequestClose={() => setShowMembers(false)}>
+    <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+        <View style={{ backgroundColor: '#1E1E1E', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, maxHeight: '60%' }}>
+            <XStack justifyContent="space-between" alignItems="center" marginBottom="$4">
+                <Text fontSize={20} fontWeight="bold" color="$color">Group Members</Text>
+                <TouchableOpacity onPress={() => setShowMembers(false)}>
+                    <X size={24} color="white" />
+                </TouchableOpacity>
+            </XStack>
+
+            <ScrollView>
+                {groupData?.members?.map((member: any) => (
+                    <XStack key={member.id || member._id} paddingVertical="$3" alignItems="center" space="$3" borderBottomWidth={1} borderColor="#2B2D31">
+                        <Circle size={40} backgroundColor="$secondary">
+                            <Text fontSize={18} color="white">{member.name?.[0] || member.username?.[0]}</Text>
+                        </Circle>
+                        <YStack>
+                            <Text fontSize={16} fontWeight="600" color="$color">{member.name || member.username}</Text>
+                            <Text fontSize={12} color="$gray10">{member.email}</Text>
+                        </YStack>
+                    </XStack>
+                )) || <Text color="$gray10">No members found</Text>}
+            </ScrollView>
+        </View>
+    </View>
+</Modal>
+        </View >
     );
 }
