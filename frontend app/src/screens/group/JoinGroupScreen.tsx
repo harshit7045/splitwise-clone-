@@ -11,34 +11,39 @@ export default function JoinGroupScreen() {
     const router = useRouter();
     const [groupId, setGroupId] = useState('');
     const [isJoining, setIsJoining] = useState(false);
+    const [error, setError] = useState('');
 
     const handleJoin = async () => {
+        // Clear previous error
+        setError('');
+
+        // Validation
         if (!groupId || groupId.trim() === '') {
-            Alert.alert("Error", "Please enter a Group ID");
+            setError("Please enter a Group ID");
             return;
         }
 
         setIsJoining(true);
         try {
-            await client.post(`/expenses/groups/${groupId}/join`);
+            await client.post(`/expenses/groups/${groupId.trim()}/join`);
             Alert.alert("Success", "You have joined the group!");
-            router.back(); // Navigate back to dashboard
+            router.back();
         } catch (error: any) {
-            // Specific handling for different error codes
             if (error.response?.status === 404) {
-                Alert.alert("Not Found", "No group exists with that ID.");
+                setError("No group exists with that ID");
             } else if (error.response?.status === 400 && error.response?.data?.error?.includes('already a member')) {
-                Alert.alert("Already Joined", "You are already a member of this group.");
+                setError("You are already a member of this group");
             } else if (error.response?.status === 400 && error.response?.data?.error?.includes('Invalid')) {
-                Alert.alert("Invalid ID", "The Group ID format is invalid. Please check and try again.");
+                setError("Invalid Group ID format");
             } else {
-                const msg = error.response?.data?.error || "Failed to join group. Please check your connection.";
-                Alert.alert("Error", msg);
+                setError(error.response?.data?.error || "Failed to join group");
             }
         } finally {
             setIsJoining(false);
         }
     };
+
+    const isValid = groupId.trim().length > 0;
 
     return (
         <View style={{ flex: 1, backgroundColor: '#1E1E1E', padding: 20, paddingTop: 60 }}>
@@ -48,16 +53,23 @@ export default function JoinGroupScreen() {
             </XStack>
 
             <YStack space="$4">
-                <Text color="$color" opacity={0.7}>Enter the Group ID to join an existing squad.</Text>
+                <Text color="$color" opacity={0.7}>Enter the Group ID to share expenses with your squad.</Text>
 
                 <NeoInput
-                    placeholder="Group ID (e.g. 15)"
+                    placeholder="Group ID (e.g. 696d11d3fa22ff8216403313)"
                     value={groupId}
-                    onChangeText={setGroupId}
-                    keyboardType="numeric"
+                    onChangeText={(text: string) => {
+                        setGroupId(text);
+                        setError(''); // Clear error on input
+                    }}
+                    autoCapitalize="none"
                 />
 
-                <NeoButton onPress={handleJoin} disabled={isJoining || !groupId}>
+                {error && (
+                    <Text color="#FF6B6B" fontSize={14} marginTop={-8}>⚠️ {error}</Text>
+                )}
+
+                <NeoButton onPress={handleJoin} disabled={isJoining || !isValid} opacity={!isValid ? 0.5 : 1}>
                     <NeoButtonText>{isJoining ? 'JOINING...' : 'JOIN SQUAD'}</NeoButtonText>
                 </NeoButton>
             </YStack>

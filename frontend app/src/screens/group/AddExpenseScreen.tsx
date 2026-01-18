@@ -15,6 +15,7 @@ export default function AddExpenseScreen() {
     const [description, setDescription] = useState('');
     const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState('');
 
     const { group_id } = useLocalSearchParams();
 
@@ -41,19 +42,22 @@ export default function AddExpenseScreen() {
     };
 
     const handleSplit = async () => {
+        // Clear previous errors
+        setError('');
+
         // Improved validation with specific messages
         if (!description || description.trim() === '') {
-            Alert.alert("Missing Description", "Please enter what this expense is for.");
+            setError("Please enter what this expense is for");
             return;
         }
 
         if (!amount || parseFloat(amount) <= 0) {
-            Alert.alert("Invalid Amount", "Please enter a valid positive amount.");
+            setError("Please enter a valid positive amount");
             return;
         }
 
         if (selectedUsers.length === 0) {
-            Alert.alert("No Members Selected", "Please select at least one person to split with.");
+            setError("Please select at least one person to split with");
             return;
         }
 
@@ -163,7 +167,11 @@ export default function AddExpenseScreen() {
 
                 <View style={{ flex: 1 }} />
 
-                <NeoButton onPress={handleSplit} disabled={!amount || isSubmitting}>
+                {error && (
+                    <Text color="#FF6B6B" fontSize={14} marginBottom="$2" textAlign="center">⚠️ {error}</Text>
+                )}
+
+                <NeoButton onPress={handleSplit} disabled={!isValid || isSubmitting} opacity={!isValid ? 0.5 : 1}>
                     <NeoButtonText>{isSubmitting ? 'SPLITTING...' : 'SPLIT IT 💸'}</NeoButtonText>
                 </NeoButton>
             </YStack>
