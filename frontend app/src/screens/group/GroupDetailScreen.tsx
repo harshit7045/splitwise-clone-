@@ -264,22 +264,14 @@ export default function GroupDetailScreen() {
                                         <Text fontSize={16} fontWeight="600" color="$color">{member.name || member.username}</Text>
                                         <Text fontSize={12} color="$gray10">{member.email}</Text>
                                     </YStack>
-
-                                    <ScrollView>
-                                        {groupData?.members?.map((member: any) => (
-                                            <XStack key={member.id || member._id} paddingVertical="$3" alignItems="center" space="$3" borderBottomWidth={1} borderColor="#2B2D31">
-                                                <Circle size={40} backgroundColor="$secondary">
-                                                    <Text fontSize={18} color="white">{member.name?.[0] || member.username?.[0]}</Text>
-                                                </Circle>
-                                                <YStack>
-                                                    <Text fontSize={16} fontWeight="600" color="$color">{member.name || member.username}</Text>
-                                                    <Text fontSize={12} color="$gray10">{member.email}</Text>
-                                                </YStack>
-                                            </XStack>
-                                        )) || <Text color="$gray10">No members found</Text>}
-                                    </ScrollView>
-                                </View>
-    </View>
+                                </XStack>
+                            ))}
+                            {(!groupData?.members || groupData.members.length === 0) && (
+                                <Text color="$gray10" textAlign="center" marginTop="$4">No members found</Text>
+                            )}
+                        </ScrollView>
+                    </View>
+                </View>
             </Modal>
         </View >
     );
