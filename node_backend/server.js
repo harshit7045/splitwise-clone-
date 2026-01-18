@@ -14,7 +14,10 @@ const app = express();
 
 // Middleware
 app.use(express.json()); // Body parser
-app.use(cors());         // Enable CORS
+app.use(cors({
+    origin: '*', // Allow all origins for now
+    credentials: true
+}));
 if (process.env.NODE_ENV === 'development') {
     app.use(morgan('dev')); // Logging
 }

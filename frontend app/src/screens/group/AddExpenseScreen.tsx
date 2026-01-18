@@ -109,6 +109,9 @@ export default function AddExpenseScreen() {
         }
     };
 
+    // Form validation
+    const isValid = description.trim().length > 0 && parseFloat(amount || '0') > 0 && selectedUsers.length > 0;
+
     return (
         <View style={{ flex: 1, backgroundColor: '#1E1E1E' }}>
             <XStack justifyContent="flex-end" padding="$4" paddingTop={50}>
