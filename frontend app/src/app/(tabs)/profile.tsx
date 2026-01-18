@@ -102,7 +102,8 @@ function GroupBalanceCard({ groupId, groupName }: { groupId: string; groupName: 
     }
 
     // Filter out zero balances and current user
-    const nonZeroBalances = balances?.filter((b: any) => Math.abs(b.amount) > 0.01) || [];
+    const members = balances?.members || [];
+    const nonZeroBalances = members.filter((b: any) => Math.abs(b.amount) > 0.01);
 
     if (nonZeroBalances.length === 0) {
         return null; // Don't show groups with no debts
