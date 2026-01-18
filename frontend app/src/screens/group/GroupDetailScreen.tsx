@@ -135,19 +135,17 @@ export default function GroupDetailScreen() {
 
                         {balances?.members?.map((member: any) => (
                             <NeoCard key={member.userId} backgroundColor="#2B2D31" padding="$4" borderColor="$borderColor" borderWidth={1}>
-                                <Text fontSize={16} fontWeight="bold" color="$color" marginBottom="$3">
-                                    👤 {member.name}
-                                    <XStack justifyContent="space-between" alignItems="center" marginBottom="$2">
-                                        <Text fontSize={16} fontWeight="bold" color="$color">{member.name}</Text>
-                                        <Text fontSize={16} fontWeight="bold" color={member.netBalance >= 0 ? '#D0FF48' : '#FF6B6B'}>
-                                            {member.netBalance >= 0 ? 'Gets back' : 'Owes'} {formatCurrency(Math.abs(member.netBalance))}
-                                        </Text>
-                                    </XStack>
-                                    <YStack space="$1">
-                                        {member.youOwe > 0 && <Text fontSize={12} color="#FF6B6B">You owe them: {formatCurrency(member.youOwe)}</Text>}
-                                        {member.owesYou > 0 && <Text fontSize={12} color="#D0FF48">They owe you: {formatCurrency(member.owesYou)}</Text>}
-                                        {member.netBalance === 0 && <Text fontSize={12} color="$color" opacity={0.5}>Settled up</Text>}
-                                    </YStack>
+                                <XStack justifyContent="space-between" alignItems="center" marginBottom="$2">
+                                    <Text fontSize={16} fontWeight="bold" color="$color">{member.name}</Text>
+                                    <Text fontSize={16} fontWeight="bold" color={member.netBalance >= 0 ? '#D0FF48' : '#FF6B6B'}>
+                                        {member.netBalance >= 0 ? 'Gets back' : 'Owes'} {formatCurrency(Math.abs(member.netBalance))}
+                                    </Text>
+                                </XStack>
+                                <YStack space="$1">
+                                    {member.youOwe > 0 && <Text fontSize={12} color="#FF6B6B">You owe them: {formatCurrency(member.youOwe)}</Text>}
+                                    {member.owesYou > 0 && <Text fontSize={12} color="#D0FF48">They owe you: {formatCurrency(member.owesYou)}</Text>}
+                                    {member.netBalance === 0 && <Text fontSize={12} color="$color" opacity={0.5}>Settled up</Text>}
+                                </YStack>
                             </NeoCard>
                         ))}
                     </YStack>
