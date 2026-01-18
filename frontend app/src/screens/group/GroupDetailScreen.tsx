@@ -47,7 +47,8 @@ export default function GroupDetailScreen() {
 
     if (expensesLoading || groupLoading) return <View style={{ flex: 1, backgroundColor: '#1E1E1E', justifyContent: 'center' }}><ActivityIndicator /></View>;
 
-    const expenses = expensesData?.results || [];
+    // Handle both response formats: { results: [...] } or direct array
+    const expenses = Array.isArray(expensesData) ? expensesData : (expensesData?.results || []);
 
     return (
         <View style={{ flex: 1, backgroundColor: '#1E1E1E', paddingTop: 60 }}>
