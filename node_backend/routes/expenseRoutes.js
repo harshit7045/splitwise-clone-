@@ -9,14 +9,14 @@ const {
 } = require('../controllers/expenseController');
 const { protect } = require('../middleware/authMiddleware');
 
-router.route('/groups/:id/expenses/')
+router.route('/groups/:id/expenses')
     .get(protect, getGroupExpenses)
     .post(protect, createExpense);
 
-router.get('/groups/:id/balances/', protect, getGroupBalances);
+router.get('/groups/:id/balances', protect, getGroupBalances);
 
 // Global Routes
-router.get('/global-balance/', protect, getUserGlobalBalance);
-router.get('/activity/', protect, getUserActivity);
+router.get('/global-balance', protect, getUserGlobalBalance);
+router.get('/activity', protect, getUserActivity);
 
 module.exports = router;

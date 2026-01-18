@@ -5,8 +5,8 @@ const { protect } = require('../middleware/authMiddleware');
 
 router.post('/', protect, createGroup); // Create a group
 router.get('/', protect, getUserGroups); // Get all groups for user
-router.get('/:id/', protect, getGroupDetail); // Get group detail
-router.post('/:id/join/', protect, joinGroup); // Join a group
-router.get('/:id/members/', protect, getGroupMembers); // Get group members
+router.get('/:id', protect, getGroupDetail); // Get group detail
+router.post('/:id/join', protect, joinGroup); // Join a group
+router.get('/:id/members', protect, getGroupMembers); // Get group members
 
 module.exports = router;
