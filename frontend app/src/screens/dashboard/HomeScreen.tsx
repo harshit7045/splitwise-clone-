@@ -1,4 +1,4 @@
-import { View, ScrollView, RefreshControl } from 'react-native'; // Added RefreshControl
+import { View, ScrollView, RefreshControl } from 'react-native';
 import { YStack, XStack, Text, Circle } from 'tamagui';
 import { useAuth } from '../../hooks/useAuth';
 import { useRouter } from 'expo-router';
@@ -7,40 +7,13 @@ import client from '../../api/client';
 import { ActivityIndicator } from 'react-native';
 import { Plus } from 'lucide-react-native';
 import React from 'react';
+import { formatCurrency } from '../../utils/format';
 
 export default function DashboardScreen() {
     const { user } = useAuth();
     const router = useRouter();
 
-    // 1. Fetch Groups
-    const { data: groups, isLoading: groupsLoading, refetch: refetchGroups } = useQuery({
-        queryKey: ['groups'],
-        queryFn: async () => (await client.get('/expenses/groups')).data
-    });
-
-    // 2. Fetch Global Balance (NEW)
-    const { data: balance, isLoading: balanceLoading, refetch: refetchBalance } = useQuery({
-        queryKey: ['globalBalance'],
-        queryFn: async () => (await client.get('/expenses/global-balance')).data
-    });
-
-    // 3. Fetch Recent Activity (NEW)
-    const { data: activityData, isLoading: activityLoading, refetch: refetchActivity } = useQuery({
-        queryKey: ['recentActivity'],
-        queryFn: async () => (await client.get('/expenses/activity')).data
-    });
-
-    const onRefresh = React.useCallback(() => {
-        refetchGroups();
-        refetchBalance();
-        refetchActivity();
-    }, []);
-
-    if (groupsLoading || balanceLoading || activityLoading) {
-        return <View style={{ flex: 1, backgroundColor: '#1E1E1E', justifyContent: 'center' }}><ActivityIndicator /></View>;
-    }
-
-    const activities = activityData?.results || [];
+    // ... queries ...
 
     return (
         <View style={{ flex: 1, backgroundColor: '#1E1E1E', padding: 20, paddingTop: 60 }}>
@@ -48,6 +21,31 @@ export default function DashboardScreen() {
             <XStack justifyContent="space-between" alignItems="center" marginBottom="$4">
                 <YStack>
                     <Text fontFamily="$heading" fontSize={24} color="$color">Good Morning,</Text>
+                    <Text fontFamily="$heading" fontSize={24} color="$primary">{user?.name}</Text>
+                </YStack>
+                <Circle size={40} backgroundColor="$secondary" onPress={() => router.push('/(tabs)/profile')}>
+                     <Text fontSize={20}>👤</Text>
+                </Circle>
+            </XStack>
+
+            <ScrollView refreshControl={<RefreshControl refreshing={groupsLoading} onRefresh={onRefresh} tintColor="#D0FF48" />}>
+                {/* Global Balance Card */}
+                <YStack backgroundColor="#2B2D31" borderRadius={16} padding="$5" marginBottom="$6">
+                    <Text color="$color" opacity={0.7} marginBottom="$2">Total Balance</Text>
+                    <Text fontFamily="$heading" fontSize={36} color={balance?.totalBalance >= 0 ? '#D0FF48' : '#FF6B6B'}>
+                        {formatCurrency(balance?.totalBalance || 0)}
+                    </Text>
+                    <XStack marginTop="$4" space="$4">
+                        <YStack flex={1} backgroundColor="#1E1E1E" padding="$3" borderRadius={8} alignItems="center">
+                             <Text color="#D0FF48" fontSize={12} fontWeight="bold">You obey</Text>
+                             <Text color="$color" fontSize={16}>{formatCurrency(balance?.totalOwed || 0)}</Text>
+                        </YStack>
+                         <YStack flex={1} backgroundColor="#1E1E1E" padding="$3" borderRadius={8} alignItems="center">
+                             <Text color="#FF6B6B" fontSize={12} fontWeight="bold">You owe</Text>
+                             <Text color="$color" fontSize={16}>{formatCurrency(Math.abs(balance?.totalOwes || 0))}</Text>
+                        </YStack>
+                    </XStack>
+                </YStack>
                     <Text fontFamily="$heading" fontSize={24} color="$primary">{user?.name || user?.username}!</Text>
                 </YStack>
                 <Circle size={50} backgroundColor="$secondary" elevation={5}>
@@ -126,6 +124,6 @@ export default function DashboardScreen() {
                     )}
                 </YStack>
             </ScrollView>
-        </View>
+        </View >
     );
 }

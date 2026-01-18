@@ -136,31 +136,17 @@ export default function GroupDetailScreen() {
                             <NeoCard key={member.userId} backgroundColor="#2B2D31" padding="$4" borderColor="$borderColor" borderWidth={1}>
                                 <Text fontSize={16} fontWeight="bold" color="$color" marginBottom="$3">
                                     👤 {member.name}
-                                </Text>
-                                <YStack space="$2">
-                                    <XStack justifyContent="space-between">
-                                        <Text color="$color" opacity={0.7} fontSize={14}>You owe them:</Text>
-                                        <Text color={member.youOwe > 0 ? '#FF6B6B' : '$color'} fontWeight="600">₹{member.youOwe}</Text>
-                                    </XStack>
-                                    <XStack justifyContent="space-between">
-                                        <Text color="$color" opacity={0.7} fontSize={14}>They owe you:</Text>
-                                        <Text color={member.owesYou > 0 ? '#D0FF48' : '$color'} fontWeight="600">₹{member.owesYou}</Text>
-                                    </XStack>
-                                    <Separator marginVertical="$1" backgroundColor="#3A3D43" />
-                                    <XStack justifyContent="space-between">
-                                        <Text color="$color" fontSize={14} fontWeight="bold">Net:</Text>
-                                        <Text
-                                            color={member.netBalance >= 0 ? '#D0FF48' : '#FF6B6B'}
-                                            fontWeight="bold"
-                                        >
-                                            {member.netBalance > 0
-                                                ? `${member.name} owes you ₹${Math.abs(member.netBalance)}`
-                                                : member.netBalance < 0
-                                                    ? `You owe ₹${Math.abs(member.netBalance)}`
-                                                    : 'Settled up'}
+                                    <XStack justifyContent="space-between" alignItems="center" marginBottom="$2">
+                                        <Text fontSize={16} fontWeight="bold" color="$color">{member.name}</Text>
+                                        <Text fontSize={16} fontWeight="bold" color={member.netBalance >= 0 ? '#D0FF48' : '#FF6B6B'}>
+                                            {member.netBalance >= 0 ? 'Gets back' : 'Owes'} {formatCurrency(Math.abs(member.netBalance))}
                                         </Text>
                                     </XStack>
-                                </YStack>
+                                    <YStack space="$1">
+                                        {member.youOwe > 0 && <Text fontSize={12} color="#FF6B6B">You owe them: {formatCurrency(member.youOwe)}</Text>}
+                                        {member.owesYou > 0 && <Text fontSize={12} color="#D0FF48">They owe you: {formatCurrency(member.owesYou)}</Text>}
+                                        {member.netBalance === 0 && <Text fontSize={12} color="$color" opacity={0.5}>Settled up</Text>}
+                                    </YStack>
                             </NeoCard>
                         ))}
                     </YStack>
@@ -212,67 +198,90 @@ export default function GroupDetailScreen() {
                                             </XStack>
                                             <YStack alignItems="flex-end">
                                                 <Text fontSize={18} fontWeight="bold" color={isMe ? '$primary' : '$color'}>
-                                                    ₹{expense.amount || 0}
+                                                    {formatCurrency(expense.amount || 0)}
                                                 </Text>
                                                 <Text fontSize={10} opacity={0.5} color="$color">
                                                     Split {expense.shares?.length || 0} ways
                                                 </Text>
                                             </YStack>
                                         </XStack>
-                                    </YStack>
-                                )
-                            }
-                        </NeoCard>
-                    );
-                        })}
-                </YStack>
+
+                                        {/* Description */}
+                                        <Text fontSize={16} color="$color" marginBottom="$3" fontWeight="500">
+                                            {expense.description || 'No description'}
+                                        </Text>
+
+                                        {/* Split Breakdown */}
+                                        {expense.shares && expense.shares.length > 0 && (
+                                            <YStack space="$1" backgroundColor="#1E1E1E" padding="$3" borderRadius={8}>
+                                                <Text fontSize={12} opacity={0.6} color="$color" marginBottom="$1">Split details:</Text>
+                                                {expense.shares.map((share: any, idx: number) => (
+                                                    <Text key={idx} fontSize={12} color="$color" opacity={0.8}>
+                                                        • {share.user?.name || share.user?.username || `User ${idx + 1}`}: {formatCurrency(share.amount)}
+                                                    </Text>
+                                                ))}
+                                            </YStack>
+                                        )}
+                                    </NeoCard>
+                                );
+                            })
+                        )}
+                    </YStack>
                 </ScrollView>
-    )
-}
+            )}
 
-{/* FAB (Only show when not in balances mode) */ }
-{
-    !showBalances && (
-        <View style={{ position: 'absolute', bottom: 30, right: 20 }}>
-            <Button
-                size="$6"
-                circular
-                backgroundColor="$primary"
-                elevation={10}
-                icon={<Plus size={30} color="black" />}
-                onPress={() => router.push({ pathname: '/add-expense', params: { group_id: id } })}
-            />
-        </View>
-    )
-}
+            {/* FAB (Only show when not in balances mode) */}
+            {!showBalances && (
+                <View style={{ position: 'absolute', bottom: 30, right: 20 }}>
+                    <Button
+                        size="$6"
+                        circular
+                        backgroundColor="$primary"
+                        elevation={10}
+                        icon={<Plus size={30} color="black" />}
+                        onPress={() => router.push({ pathname: '/add-expense', params: { group_id: id } })}
+                    />
+                </View>
+            )}
 
-{/* Members Modal */ }
-<Modal visible={showMembers} animationType="slide" transparent={true} onRequestClose={() => setShowMembers(false)}>
-    <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
-        <View style={{ backgroundColor: '#1E1E1E', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, maxHeight: '60%' }}>
-            <XStack justifyContent="space-between" alignItems="center" marginBottom="$4">
-                <Text fontSize={20} fontWeight="bold" color="$color">Group Members</Text>
-                <TouchableOpacity onPress={() => setShowMembers(false)}>
-                    <X size={24} color="white" />
-                </TouchableOpacity>
-            </XStack>
+            {/* Members Modal */}
+            <Modal visible={showMembers} animationType="slide" transparent={true} onRequestClose={() => setShowMembers(false)}>
+                <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                    <View style={{ backgroundColor: '#1E1E1E', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, maxHeight: '60%' }}>
+                        <XStack justifyContent="space-between" alignItems="center" marginBottom="$4">
+                            <Text fontSize={20} fontWeight="bold" color="$color">Group Members</Text>
+                            <TouchableOpacity onPress={() => setShowMembers(false)}>
+                                <X size={24} color="white" />
+                            </TouchableOpacity>
+                        </XStack>
 
-            <ScrollView>
-                {groupData?.members?.map((member: any) => (
-                    <XStack key={member.id || member._id} paddingVertical="$3" alignItems="center" space="$3" borderBottomWidth={1} borderColor="#2B2D31">
-                        <Circle size={40} backgroundColor="$secondary">
-                            <Text fontSize={18} color="white">{member.name?.[0] || member.username?.[0]}</Text>
-                        </Circle>
-                        <YStack>
-                            <Text fontSize={16} fontWeight="600" color="$color">{member.name || member.username}</Text>
-                            <Text fontSize={12} color="$gray10">{member.email}</Text>
-                        </YStack>
-                    </XStack>
-                )) || <Text color="$gray10">No members found</Text>}
-            </ScrollView>
-        </View>
+                        <ScrollView>
+                            {groupData?.members?.map((member: any) => (
+                                <XStack key={member.id || member._id} paddingVertical="$3" alignItems="center" space="$3" borderBottomWidth={1} borderColor="#2B2D31">
+                                    <Circle size={40} backgroundColor="$secondary">
+                                        <Text fontSize={18} color="white">{member.name?.[0] || member.username?.[0]}</Text>
+                                    </Circle>
+                                    <YStack>
+                                        <Text fontSize={16} fontWeight="600" color="$color">{member.name || member.username}</Text>
+                                        <Text fontSize={12} color="$gray10">{member.email}</Text>
+                                    </YStack>
+
+                                    <ScrollView>
+                                        {groupData?.members?.map((member: any) => (
+                                            <XStack key={member.id || member._id} paddingVertical="$3" alignItems="center" space="$3" borderBottomWidth={1} borderColor="#2B2D31">
+                                                <Circle size={40} backgroundColor="$secondary">
+                                                    <Text fontSize={18} color="white">{member.name?.[0] || member.username?.[0]}</Text>
+                                                </Circle>
+                                                <YStack>
+                                                    <Text fontSize={16} fontWeight="600" color="$color">{member.name || member.username}</Text>
+                                                    <Text fontSize={12} color="$gray10">{member.email}</Text>
+                                                </YStack>
+                                            </XStack>
+                                        )) || <Text color="$gray10">No members found</Text>}
+                                    </ScrollView>
+                                </View>
     </View>
-</Modal>
+            </Modal>
         </View >
     );
 }

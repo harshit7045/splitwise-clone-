@@ -128,7 +128,7 @@ export default function AddExpenseScreen() {
                             onChangeText={setAmount}
                             placeholder="0"
                             placeholderTextColor="#444"
-                            keyboardType="numeric"
+                            keyboardType="decimal-pad"
                             autoFocus
                             style={{ fontSize: 64, color: '#D0FF48', fontFamily: 'InterBold', minWidth: 50 }}
                         />
