@@ -15,19 +15,19 @@ export default function DashboardScreen() {
     // 1. Fetch Groups
     const { data: groups, isLoading: groupsLoading, refetch: refetchGroups } = useQuery({
         queryKey: ['groups'],
-        queryFn: async () => (await client.get('/expenses/groups/')).data
+        queryFn: async () => (await client.get('/expenses/groups')).data
     });
 
     // 2. Fetch Global Balance (NEW)
     const { data: balance, isLoading: balanceLoading, refetch: refetchBalance } = useQuery({
         queryKey: ['globalBalance'],
-        queryFn: async () => (await client.get('/expenses/user/balance/')).data
+        queryFn: async () => (await client.get('/expenses/global-balance')).data
     });
 
     // 3. Fetch Recent Activity (NEW)
     const { data: activityData, isLoading: activityLoading, refetch: refetchActivity } = useQuery({
         queryKey: ['recentActivity'],
-        queryFn: async () => (await client.get('/expenses/user/activity/')).data
+        queryFn: async () => (await client.get('/expenses/activity')).data
     });
 
     const onRefresh = React.useCallback(() => {

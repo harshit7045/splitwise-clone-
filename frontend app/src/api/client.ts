@@ -1,8 +1,10 @@
 import axios from 'axios';
 import { storage } from '../utils/storage';
 
-// Placeholder URL - to be updated when user provides cloud URL
-export const API_URL = 'http://192.168.0.113:5000/api';
+// Configure this URL based on your setup
+// For local development: http://localhost:5000/api
+// For production: Update to your deployed backend URL
+export const API_URL = 'http://localhost:5000/api';
 
 const client = axios.create({
     baseURL: API_URL,

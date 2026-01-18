@@ -275,7 +275,7 @@ const getUserActivity = async (req, res) => {
             .sort({ createdAt: -1 })
             .limit(20); // Pagination in Django was 100, we can limit here
 
-        res.json(expenses.map(formatExpense));
+        res.json({ results: expenses.map(formatExpense) });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

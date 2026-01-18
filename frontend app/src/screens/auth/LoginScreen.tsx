@@ -29,7 +29,7 @@ export default function LoginScreen() {
 
     const onSubmit = async (data: LoginFormData) => {
         try {
-            const response = await client.post('/users/login/', data);
+            const response = await client.post('/auth/login', data);
             await login(response.data, response.data.token);
             router.replace('/(tabs)');
         } catch (err: any) {

@@ -21,7 +21,7 @@ export default function AddExpenseScreen() {
     // 1. Fetch Real Group Members
     const { data: members = [], isSuccess } = useQuery({
         queryKey: ['members', group_id],
-        queryFn: async () => (await client.get(`/expenses/groups/${group_id}/members/`)).data,
+        queryFn: async () => (await client.get(`/expenses/groups/${group_id}/members`)).data,
         enabled: !!group_id
     });
 
@@ -76,7 +76,7 @@ export default function AddExpenseScreen() {
 
             // LOGGING INSERTED HERE
             console.log("Splitting Expense - Request:", JSON.stringify(payload, null, 2));
-            const response = await client.post(`/expenses/groups/${group_id}/expenses/`, payload);
+            const response = await client.post(`/expenses/groups/${group_id}/expenses`, payload);
             console.log("Splitting Expense - Response:", JSON.stringify(response.data, null, 2));
 
             queryClient.invalidateQueries({ queryKey: ['expenses'] });
