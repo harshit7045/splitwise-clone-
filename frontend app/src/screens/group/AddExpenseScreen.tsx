@@ -97,6 +97,7 @@ export default function AddExpenseScreen() {
             queryClient.invalidateQueries({ queryKey: ['expenses'] });
             queryClient.invalidateQueries({ queryKey: ['globalBalance'] });
             queryClient.invalidateQueries({ queryKey: ['recentActivity'] });
+            queryClient.invalidateQueries({ queryKey: ['balances'] });
 
             // Navigate back immediately - web doesn't handle Alert.alert well
             setIsSubmitting(false);
