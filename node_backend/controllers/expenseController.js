@@ -38,8 +38,16 @@ const getGroupExpenses = async (req, res) => {
 // @desc    Create expense
 // @route   POST /api/expenses/groups/:id/expenses/
 const createExpense = async (req, res) => {
-    const { description, amount, category, shares } = req.body;
+    const { description, amount, category, shares, splitType, splitDetails } = req.body;
     const groupId = req.params.id;
+
+    // Validation for Percentage Splits (User Request)
+    if (splitType === 'PERCENTAGE' && splitDetails) {
+        const totalPercent = splitDetails.reduce((acc, curr) => acc + curr.share, 0);
+        if (Math.abs(totalPercent - 100) > 0.01) { // Float safety
+            return res.status(400).json({ error: 'Percentages must equal 100' });
+        }
+    }
 
     try {
         const group = await Group.findById(groupId);
