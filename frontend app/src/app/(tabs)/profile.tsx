@@ -6,6 +6,7 @@ import { useRouter } from 'expo-router';
 import client from '../../api/client';
 import { ActivityIndicator } from 'react-native';
 import React from 'react';
+import { formatCurrency } from '../../utils/format';
 
 interface Debt {
     name: string;
