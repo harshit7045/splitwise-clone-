@@ -91,4 +91,27 @@ const getGroupMembers = async (req, res) => {
     }
 };
 
-module.exports = { getUserGroups, createGroup, joinGroup, getGroupMembers };
+// @desc    Get Group Detail
+// @route   GET /api/expenses/groups/:id/
+const getGroupDetail = async (req, res) => {
+    try {
+        const group = await Group.findById(req.params.id).populate('members', 'name username email');
+
+        if (!group) {
+            return res.status(404).json({ error: 'Group not found' });
+        }
+
+        // Security Check: Must be member to view group
+        const isMember = group.members.some(member => member._id.toString() === req.user._id.toString());
+        if (!isMember) {
+            return res.status(403).json({ error: 'Not authorized to view this group' });
+        }
+
+        res.json(formatGroup(group));
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Server Error' });
+    }
+};
+
+module.exports = { getUserGroups, createGroup, joinGroup, getGroupMembers, getGroupDetail };
