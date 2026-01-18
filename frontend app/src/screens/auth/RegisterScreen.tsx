@@ -37,7 +37,7 @@ export default function RegisterScreen() {
         } catch (err: any) {
             console.error(err);
             // Capture the backend error message
-            const errorMessage = err.response?.data?.error || 'Registration failed. Please try again.';
+            const errorMessage = err.response?.data?.message || 'Registration failed. Please try again.';
             setError(errorMessage);
         }
     };

@@ -36,19 +36,19 @@ const registerUser = async (req, res) => {
 
         // 1. Basic Validation
         if (!name || !username || !email || !password) {
-            return res.status(400).json({ error: 'Please provide all fields' });
+            return res.status(400).json({ message: 'Please provide all fields' });
         }
 
         // 2. Check for existing username
         const userExists = await User.findOne({ username });
         if (userExists) {
-            return res.status(409).json({ error: 'Username already taken' });
+            return res.status(409).json({ message: 'Username already taken' });
         }
 
         // 3. Check for existing email
         const emailExists = await User.findOne({ email });
         if (emailExists) {
-            return res.status(409).json({ error: 'Email already registered' });
+            return res.status(409).json({ message: 'Email already registered' });
         }
 
         const user = await User.create({
@@ -73,14 +73,14 @@ const registerUser = async (req, res) => {
         // 4. Handle MongoDB Duplicate Key Error (E11000)
         if (error.code === 11000) {
             const field = Object.keys(error.keyPattern)[0];
-            return res.status(409).json({ error: `${field} already exists` });
+            return res.status(409).json({ message: `${field} already exists` });
         }
         // 5. Handle Validation Errors
         if (error.name === 'ValidationError') {
             const messages = Object.values(error.errors).map(val => val.message);
-            return res.status(400).json({ error: messages.join(', ') });
+            return res.status(400).json({ message: messages.join(', ') });
         }
-        res.status(500).json({ error: 'Server error during registration' });
+        res.status(500).json({ message: 'Server error during registration' });
     }
 };
 

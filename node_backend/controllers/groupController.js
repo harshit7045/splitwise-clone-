@@ -43,12 +43,12 @@ const joinGroup = async (req, res) => {
         const group = await Group.findById(req.params.id);
 
         if (!group) {
-            return res.status(404).json({ error: 'Group not found with this ID' });
+            return res.status(404).json({ message: 'Group not found with this ID' });
         }
 
         // Check if already member
         if (group.members.includes(req.user._id)) {
-            return res.status(400).json({ error: 'You are already a member of this group' });
+            return res.status(400).json({ message: 'You are already a member of this group' });
         }
 
         group.members.push(req.user._id);
@@ -58,10 +58,10 @@ const joinGroup = async (req, res) => {
     } catch (error) {
         // Handle CastError (Invalid ObjectId format like "abc123")
         if (error.name === 'CastError') {
-            return res.status(400).json({ error: 'Invalid Group ID format' });
+            return res.status(400).json({ message: 'Invalid Group ID format' });
         }
         console.error(error);
-        res.status(500).json({ error: 'Server error while joining group' });
+        res.status(500).json({ message: 'Server error while joining group' });
     }
 };
 
@@ -72,7 +72,7 @@ const getGroupMembers = async (req, res) => {
         const group = await Group.findById(req.params.id).populate('members', 'name username email');
 
         if (!group) {
-            return res.status(404).json({ error: 'Group not found' });
+            return res.status(404).json({ message: 'Group not found' });
         }
 
         // Security Check: Must be member to see members
@@ -92,7 +92,7 @@ const getGroupMembers = async (req, res) => {
         res.json(members);
     } catch (error) {
         console.error(error);
-        res.status(500).json({ error: 'Server Error' });
+        res.status(500).json({ message: 'Server Error' });
     }
 };
 
@@ -103,7 +103,7 @@ const getGroupDetail = async (req, res) => {
         const group = await Group.findById(req.params.id).populate('members', 'name username email');
 
         if (!group) {
-            return res.status(404).json({ error: 'Group not found' });
+            return res.status(404).json({ message: 'Group not found' });
         }
 
         // Security Check: Must be member to view group
@@ -115,7 +115,7 @@ const getGroupDetail = async (req, res) => {
         res.json(formatGroup(group));
     } catch (error) {
         console.error(error);
-        res.status(500).json({ error: 'Server Error' });
+        res.status(500).json({ message: 'Server Error' });
     }
 };
 

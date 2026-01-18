@@ -29,15 +29,8 @@ export default function JoinGroupScreen() {
             Alert.alert("Success", "You have joined the group!");
             router.back();
         } catch (error: any) {
-            if (error.response?.status === 404) {
-                setError("No group exists with that ID");
-            } else if (error.response?.status === 400 && error.response?.data?.error?.includes('already a member')) {
-                setError("You are already a member of this group");
-            } else if (error.response?.status === 400 && error.response?.data?.error?.includes('Invalid')) {
-                setError("Invalid Group ID format");
-            } else {
-                setError(error.response?.data?.error || "Failed to join group");
-            }
+            const message = error.response?.data?.message || "Failed to join group";
+            setError(message);
         } finally {
             setIsJoining(false);
         }
