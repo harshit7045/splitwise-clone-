@@ -2,7 +2,7 @@ import axios from 'axios';
 import { storage } from '../utils/storage';
 
 // Placeholder URL - to be updated when user provides cloud URL
-export const API_URL = 'http://192.168.0.113:8000/api';
+export const API_URL = 'http://192.168.0.113:5000/api';
 
 const client = axios.create({
     baseURL: API_URL,

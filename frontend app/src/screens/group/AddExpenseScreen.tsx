@@ -74,7 +74,10 @@ export default function AddExpenseScreen() {
                 shares: shares
             };
 
-            await client.post(`/expenses/groups/${group_id}/expenses/`, payload);
+            // LOGGING INSERTED HERE
+            console.log("Splitting Expense - Request:", JSON.stringify(payload, null, 2));
+            const response = await client.post(`/expenses/groups/${group_id}/expenses/`, payload);
+            console.log("Splitting Expense - Response:", JSON.stringify(response.data, null, 2));
 
             queryClient.invalidateQueries({ queryKey: ['expenses'] });
             queryClient.invalidateQueries({ queryKey: ['globalBalance'] });
