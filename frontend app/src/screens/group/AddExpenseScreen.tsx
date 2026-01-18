@@ -41,7 +41,10 @@ export default function AddExpenseScreen() {
     };
 
     const handleSplit = async () => {
+        console.log('🔵 Split button clicked!', { amount, description, selectedUsersCount: selectedUsers.length });
+
         if (!amount || !description || selectedUsers.length === 0) {
+            console.log('❌ Validation failed:', { amount: !!amount, description: !!description, selectedUsers: selectedUsers.length });
             Alert.alert("Error", "Please enter amount, description, and select at least one person.");
             return;
         }
@@ -83,20 +86,14 @@ export default function AddExpenseScreen() {
             queryClient.invalidateQueries({ queryKey: ['globalBalance'] });
             queryClient.invalidateQueries({ queryKey: ['recentActivity'] });
 
-            // FIX: Explicit feedback + double-submit prevention
-            // Do NOT set isSubmitting(false) here. Keep it true to prevent double-clicks during navigation.
-            Alert.alert(
-                "Expense Added",
-                "Your expense has been split successfully! 💸",
-                [{ text: "OK", onPress: () => router.back() }]
-            );
+            // Navigate back immediately - web doesn't handle Alert.alert well
+            setIsSubmitting(false);
+            router.back();
         } catch (error: any) {
             console.error("Failed to add expense", error);
             const errorMsg = error.response?.data?.error || "Failed to add expense. Please try again.";
             Alert.alert("Error", errorMsg);
-            setIsSubmitting(false); // Only re-enable on error
-        } finally {
-            // Removed finally block to keep button disabled on success
+            setIsSubmitting(false);
         }
     };
 
