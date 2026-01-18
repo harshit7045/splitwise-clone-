@@ -27,6 +27,7 @@ const getGroupExpenses = async (req, res) => {
 
         const expenses = await Expense.find({ group: req.params.id })
             .populate('paid_by', 'name username')
+            .populate('shares.user', 'name username') // Populate user data in shares
             .sort({ createdAt: -1 });
 
         res.json(expenses.map(formatExpense));

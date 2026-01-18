@@ -170,7 +170,7 @@ export default function GroupDetailScreen() {
                                             {expense.shares.slice(0, 3).map((share: any, idx: number) => (
                                                 <XStack key={idx} justifyContent="space-between" paddingVertical="$1">
                                                     <Text fontSize={12} opacity={0.7} color="$color">
-                                                        • Split {idx + 1}
+                                                        • {share.user?.name || share.user?.username || `User ${idx + 1}`}
                                                     </Text>
                                                     <Text fontSize={12} opacity={0.7} color="$color">
                                                         ₹{share.amount || 0}
