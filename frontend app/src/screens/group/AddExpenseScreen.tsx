@@ -41,11 +41,19 @@ export default function AddExpenseScreen() {
     };
 
     const handleSplit = async () => {
-        console.log('🔵 Split button clicked!', { amount, description, selectedUsersCount: selectedUsers.length });
+        // Improved validation with specific messages
+        if (!description || description.trim() === '') {
+            Alert.alert("Missing Description", "Please enter what this expense is for.");
+            return;
+        }
 
-        if (!amount || !description || selectedUsers.length === 0) {
-            console.log('❌ Validation failed:', { amount: !!amount, description: !!description, selectedUsers: selectedUsers.length });
-            Alert.alert("Error", "Please enter amount, description, and select at least one person.");
+        if (!amount || parseFloat(amount) <= 0) {
+            Alert.alert("Invalid Amount", "Please enter a valid positive amount.");
+            return;
+        }
+
+        if (selectedUsers.length === 0) {
+            Alert.alert("No Members Selected", "Please select at least one person to split with.");
             return;
         }
 
