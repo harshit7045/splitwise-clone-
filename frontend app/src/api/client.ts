@@ -4,7 +4,7 @@ import { storage } from '../utils/storage';
 // Configure this URL based on your setup
 // For local development: http://localhost:5000/api
 // For production: Update to your deployed backend URL
-export const API_URL = 'http://localhost:5000/api';
+export const API_URL = 'https://splitwise-bqxz.onrender.com/api';
 
 const client = axios.create({
     baseURL: API_URL,
