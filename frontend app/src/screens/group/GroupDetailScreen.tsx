@@ -9,6 +9,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { ActivityIndicator } from 'react-native';
 import React, { useState } from 'react';
 import * as Clipboard from 'expo-clipboard';
+import { formatCurrency } from '../../utils/format';
 
 export default function GroupDetailScreen() {
     const { id } = useLocalSearchParams();
