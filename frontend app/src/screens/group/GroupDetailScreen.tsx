@@ -1,19 +1,21 @@
-import { View, ScrollView, RefreshControl } from 'react-native';
+import { View, ScrollView, RefreshControl, Modal, TouchableOpacity, Alert } from 'react-native';
 import { YStack, XStack, Text, Circle, Button, Separator } from 'tamagui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Plus, ArrowLeft } from 'lucide-react-native';
+import { Plus, ArrowLeft, Copy, Users, X } from 'lucide-react-native';
 import { NeoCard } from '../../components/ui/NeoCard';
 import { useQuery } from '@tanstack/react-query';
 import client from '../../api/client';
 import { useAuth } from '../../hooks/useAuth';
 import { ActivityIndicator } from 'react-native';
 import React, { useState } from 'react';
+import * as Clipboard from 'expo-clipboard';
 
 export default function GroupDetailScreen() {
     const { id } = useLocalSearchParams();
     const router = useRouter();
     const { user } = useAuth();
     const [showBalances, setShowBalances] = useState(false);
+    const [showMembers, setShowMembers] = useState(false);
 
     // 1. Fetch Expenses
     const { data: expensesData, isLoading: expensesLoading, refetch: refetchExpenses } = useQuery({
@@ -38,6 +40,11 @@ export default function GroupDetailScreen() {
         refetchExpenses();
     }, []);
 
+    const copyGroupId = async () => {
+        await Clipboard.setStringAsync(id as string);
+        Alert.alert("Group ID Copied!", "Share this ID with friends to invite them to the group.");
+    };
+
     if (expensesLoading || groupLoading) return <View style={{ flex: 1, backgroundColor: '#1E1E1E', justifyContent: 'center' }}><ActivityIndicator /></View>;
 
     const expenses = expensesData?.results || [];
@@ -45,15 +52,27 @@ export default function GroupDetailScreen() {
     return (
         <View style={{ flex: 1, backgroundColor: '#1E1E1E', paddingTop: 60 }}>
             {/* Header */}
-            <XStack alignItems="center" paddingHorizontal="$4" marginBottom="$4" justifyContent="space-between">
-                <XStack alignItems="center" space="$3">
-                    <Button icon={ArrowLeft} chromeless onPress={() => router.back()} color="$color" />
-                    <Text fontFamily="$heading" fontSize={24} color="$color">{groupData?.name || 'Group'}</Text>
+            <YStack paddingHorizontal="$4" marginBottom="$4" space="$3">
+                <XStack alignItems="center" justifyContent="space-between">
+                    <XStack alignItems="center" space="$3">
+                        <Button icon={ArrowLeft} chromeless onPress={() => router.back()} color="$color" />
+                        <Text fontFamily="$heading" fontSize={24} color="$color">{groupData?.name || 'Group'}</Text>
+                    </XStack>
+                    <Circle size={40} backgroundColor="$secondary">
+                        <Text fontSize={18} top={1}>🌴</Text>
+                    </Circle>
                 </XStack>
-                <Circle size={40} backgroundColor="$secondary">
-                    <Text fontSize={18} top={1}>🌴</Text>
-                </Circle>
-            </XStack>
+
+                {/* Action Buttons */}
+                <XStack space="$3">
+                    <Button size="$3" backgroundColor="#2B2D31" onPress={copyGroupId} icon={<Copy size={16} color="#D0FF48" />} flex={1}>
+                        <Text color="$color" fontSize={12}>Copy ID</Text>
+                    </Button>
+                    <Button size="$3" backgroundColor="#2B2D31" onPress={() => setShowMembers(true)} icon={<Users size={16} color="#D0FF48" />} flex={1}>
+                        <Text color="$color" fontSize={12}>{groupData?.members?.length || 0} Members</Text>
+                    </Button>
+                </XStack>
+            </YStack>
 
             {/* Toggle Balances Button */}
             <XStack justifyContent="center" marginBottom="$4">
@@ -135,6 +154,34 @@ export default function GroupDetailScreen() {
                     />
                 </View>
             )}
+
+            {/* Members Modal */}
+            <Modal visible={showMembers} animationType="slide" transparent={true} onRequestClose={() => setShowMembers(false)}>
+                <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                    <View style={{ backgroundColor: '#1E1E1E', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, maxHeight: '60%' }}>
+                        <XStack justifyContent="space-between" alignItems="center" marginBottom="$4">
+                            <Text fontSize={20} fontWeight="bold" color="$color">Group Members</Text>
+                            <TouchableOpacity onPress={() => setShowMembers(false)}>
+                                <X size={24} color="white" />
+                            </TouchableOpacity>
+                        </XStack>
+
+                        <ScrollView>
+                            {groupData?.members?.map((member: any) => (
+                                <XStack key={member.id || member._id} paddingVertical="$3" alignItems="center" space="$3" borderBottomWidth={1} borderColor="#2B2D31">
+                                    <Circle size={40} backgroundColor="$secondary">
+                                        <Text fontSize={18} color="white">{member.name?.[0] || member.username?.[0]}</Text>
+                                    </Circle>
+                                    <YStack>
+                                        <Text fontSize={16} fontWeight="600" color="$color">{member.name || member.username}</Text>
+                                        <Text fontSize={12} color="$gray10">{member.email}</Text>
+                                    </YStack>
+                                </XStack>
+                            )) || <Text color="$gray10">No members found</Text>}
+                        </ScrollView>
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 }
