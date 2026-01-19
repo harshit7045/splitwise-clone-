@@ -44,6 +44,7 @@ export default function CreateGroupScreen() {
                 <NeoButton onPress={handleCreate} disabled={loading}>
                     <NeoButtonText>{loading ? 'Creating...' : 'Create Squad'}</NeoButtonText>
                 </NeoButton>
+            </YStack>
         </View>
     );
 }

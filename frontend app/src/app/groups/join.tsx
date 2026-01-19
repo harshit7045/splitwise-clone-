@@ -51,6 +51,7 @@ export default function JoinGroupScreen() {
                 <NeoButton onPress={handleJoin} disabled={loading}>
                     <NeoButtonText>{loading ? 'Joining...' : 'Join Squad'}</NeoButtonText>
                 </NeoButton>
+            </YStack>
         </View>
     );
 }
