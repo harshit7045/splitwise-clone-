@@ -55,16 +55,11 @@ export default function ProfileScreen() {
     const allBalances = balanceQueries.data || [];
 
     allBalances.forEach((groupBalance: any) => {
-        const members = groupBalance.data?.members || [];
-        members.forEach((member: any) => {
-            if (member.amount < 0) {
-                // Negative amount means you owe them
-                totalYouOwe += Math.abs(member.amount);
-            } else if (member.amount > 0) {
-                // Positive amount means they owe you
-                totalOwedToYou += member.amount;
-            }
-        });
+        const summary = groupBalance.data?.summary;
+        if (summary) {
+            totalYouOwe += summary.totalYouOwe || 0;
+            totalOwedToYou += summary.totalOwesYou || 0;
+        }
     });
 
     const netBalance = totalOwedToYou - totalYouOwe;
