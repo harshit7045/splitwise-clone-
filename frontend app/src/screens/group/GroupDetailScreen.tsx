@@ -58,7 +58,7 @@ export default function GroupDetailScreen() {
             <YStack paddingHorizontal="$4" marginBottom="$4" space="$3">
                 <XStack alignItems="center" justifyContent="space-between">
                     <XStack alignItems="center" space="$3">
-                        <Button icon={ArrowLeft} chromeless onPress={() => router.back()} color="$color" />
+                        <Button icon={ArrowLeft} chromeless onPress={() => router.back()} color="white" />
                         <Text fontFamily="$heading" fontSize={24} color="$color">{groupData?.name || 'Group'}</Text>
                     </XStack>
                     <Circle size={40} backgroundColor="$secondary">

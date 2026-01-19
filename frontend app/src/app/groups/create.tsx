@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { View, TextInput, Alert } from 'react-native';
-import { YStack, Text } from 'tamagui';
+import { View, TextInput, Alert, TouchableOpacity } from 'react-native';
+import { YStack, Text, Button } from 'tamagui';
 import { useRouter } from 'expo-router';
+import { ArrowLeft } from 'lucide-react-native';
 import client from '../../api/client';
 import { NeoButton, NeoButtonText } from '../../components/ui/NeoButton';
 import { NeoInput } from '../../components/ui/NeoInput';
@@ -25,13 +26,24 @@ export default function CreateGroupScreen() {
     };
 
     return (
-        <View style={{ flex: 1, backgroundColor: '#1E1E1E', padding: 20, justifyContent: 'center' }}>
-            <Text color="$color" fontSize={24} fontFamily="$heading" marginBottom="$4">Name your Squad</Text>
-            <NeoInput placeholder="e.g. Goa Trip, Office Lunch" value={name} onChangeText={setName} />
-            <YStack height={20} />
-            <NeoButton onPress={handleCreate} disabled={loading}>
-                <NeoButtonText>{loading ? 'Creating...' : 'Create Squad'}</NeoButtonText>
-            </NeoButton>
+        <View style={{ flex: 1, backgroundColor: '#1E1E1E', padding: 20, paddingTop: 60 }}>
+            <Button
+                icon={ArrowLeft}
+                chromeless
+                onPress={() => router.back()}
+                color="white"
+                position="absolute"
+                top={60}
+                left={20}
+                zIndex={10}
+            />
+            <YStack justifyContent="center" flex={1}>
+                <Text color="$color" fontSize={24} fontFamily="$heading" marginBottom="$4">Name your Squad</Text>
+                <NeoInput placeholder="e.g. Goa Trip, Office Lunch" value={name} onChangeText={setName} />
+                <YStack height={20} />
+                <NeoButton onPress={handleCreate} disabled={loading}>
+                    <NeoButtonText>{loading ? 'Creating...' : 'Create Squad'}</NeoButtonText>
+                </NeoButton>
         </View>
     );
 }
