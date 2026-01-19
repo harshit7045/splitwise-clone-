@@ -9,6 +9,7 @@ export const StyledInput = styled(Input, {
     color: '$color',
     fontSize: 16,
     fontFamily: '$body',
+    height: 50,
 
     focusStyle: {
         borderColor: '$primary',
