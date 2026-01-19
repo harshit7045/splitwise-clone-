@@ -53,20 +53,19 @@ export default function DashboardScreen() {
                 refreshControl={<RefreshControl refreshing={groupsLoading} onRefresh={onRefresh} tintColor="#D0FF48" />}
                 showsVerticalScrollIndicator={false}
             >
-                {/* Global Balance Card */}
                 <YStack backgroundColor="#2B2D31" borderRadius={16} padding="$5" marginBottom="$6">
                     <Text color="$color" opacity={0.7} marginBottom="$2">Total Balance</Text>
-                    <Text fontFamily="$heading" fontSize={36} color={balance?.totalBalance >= 0 ? '#D0FF48' : '#FF6B6B'}>
-                        {formatCurrency(balance?.totalBalance || 0)}
+                    <Text fontFamily="$heading" fontSize={36} color={balance?.total_balance >= 0 ? '#D0FF48' : '#FF6B6B'}>
+                        {formatCurrency(balance?.total_balance || 0)}
                     </Text>
                     <XStack marginTop="$4" space="$4">
                         <YStack flex={1} backgroundColor="#1E1E1E" padding="$3" borderRadius={8} alignItems="center">
-                            <Text color="#D0FF48" fontSize={12} fontWeight="bold">You obey</Text>
-                            <Text color="$color" fontSize={16}>{formatCurrency(balance?.totalOwed || 0)}</Text>
+                            <Text color="#D0FF48" fontSize={12} fontWeight="bold">You are owed</Text>
+                            <Text color="$color" fontSize={16}>{formatCurrency(balance?.owed_to_you || 0)}</Text>
                         </YStack>
                         <YStack flex={1} backgroundColor="#1E1E1E" padding="$3" borderRadius={8} alignItems="center">
                             <Text color="#FF6B6B" fontSize={12} fontWeight="bold">You owe</Text>
-                            <Text color="$color" fontSize={16}>{formatCurrency(Math.abs(balance?.totalOwes || 0))}</Text>
+                            <Text color="$color" fontSize={16}>{formatCurrency(balance?.you_owe || 0)}</Text>
                         </YStack>
                     </XStack>
                 </YStack>
