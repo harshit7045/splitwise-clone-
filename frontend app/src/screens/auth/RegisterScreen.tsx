@@ -34,7 +34,7 @@ export default function RegisterScreen() {
         try {
             setError(''); // Clear previous errors
             const response = await client.post('/auth/register', data);
-            await login(response.data, response.data.token);
+            await login(response.data.user, response.data.token);
             router.replace('/(tabs)');
         } catch (err: any) {
             console.error(err);
