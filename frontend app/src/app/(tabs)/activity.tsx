@@ -35,7 +35,31 @@ export default function ActivityScreen() {
                         activities.map((activity: any) => {
                             // Determine if this is an outgoing (user paid) or incoming (others paid) expense
                             const isOutgoing = activity.paid_by_name === user?.name || activity.paid_by_name === user?.username;
-                            const backgroundColor = isOutgoing ? '#2B2D31' : '#2B2D31';
+
+                            // Find the user's share in this expense
+                            const userShare = activity.shares?.find((share: any) =>
+                                share.user?.name === user?.name ||
+                                share.user?.username === user?.username ||
+                                share.user?._id === user?.id ||
+                                share.user?.toString() === user?.id
+                            );
+                            const myShareAmount = userShare?.amount || 0;
+
+                            // Calculate what I owe or am owed for THIS transaction
+                            let transactionStatus = '';
+                            let statusColor = '$color';
+
+                            if (isOutgoing) {
+                                // I paid - others owe me
+                                const othersOweMe = activity.amount - myShareAmount;
+                                transactionStatus = `You get ₹${othersOweMe.toFixed(2)}`;
+                                statusColor = '#D0FF48';
+                            } else {
+                                // Someone else paid - I owe them my share
+                                transactionStatus = `You owe ₹${myShareAmount.toFixed(2)}`;
+                                statusColor = '#FF6B6B';
+                            }
+
                             const iconBg = isOutgoing ? '#FF6B6B' : '#D0FF48';
                             const icon = isOutgoing ? '↗️' : '↙️';
                             const accentColor = isOutgoing ? '#FF6B6B' : '#D0FF48';
@@ -44,7 +68,7 @@ export default function ActivityScreen() {
                             return (
                                 <XStack
                                     key={activity.id}
-                                    backgroundColor={backgroundColor}
+                                    backgroundColor="#2B2D31"
                                     padding="$4"
                                     borderRadius={12}
                                     alignItems="center"
@@ -59,18 +83,21 @@ export default function ActivityScreen() {
                                         <YStack flex={1}>
                                             <Text color="$color" fontWeight="bold" fontSize={16}>{activity.description}</Text>
                                             <Text color={accentColor} fontSize={12} fontWeight="600" marginTop="$1">
-                                                {typeLabel} • {new Date(activity.created_at).toLocaleDateString()}
+                                                {typeLabel} {formatCurrency(activity.amount)}
+                                            </Text>
+                                            <Text color={statusColor} fontSize={11} fontWeight="600" marginTop="$1">
+                                                {transactionStatus}
                                             </Text>
                                             {activity.group_name && (
-                                                <Text color="$color" opacity={0.5} fontSize={10} fontWeight="bold" marginTop="$1">{activity.group_name}</Text>
+                                                <Text color="$color" opacity={0.5} fontSize={10} marginTop="$1">{activity.group_name}</Text>
                                             )}
                                         </YStack>
                                     </XStack>
                                     <YStack alignItems="flex-end">
+                                        <Text color="$color" opacity={0.6} fontSize={10}>Your share</Text>
                                         <Text color={accentColor} fontFamily="$body" fontWeight="bold" fontSize={18}>
-                                            {formatCurrency(activity.amount)}
+                                            {formatCurrency(myShareAmount)}
                                         </Text>
-                                        <Text color="$gray10" fontSize={10}>Total</Text>
                                     </YStack>
                                 </XStack>
                             );
