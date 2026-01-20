@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
+import { View, KeyboardAvoidingView, Platform, TouchableOpacity, Image } from 'react-native';
 import { YStack, Text, XStack, useTheme } from 'tamagui';
 import { useForm, Controller } from 'react-hook-form';
 import { useRouter } from 'expo-router';
@@ -47,8 +47,12 @@ export default function LoginScreen() {
         >
             <YStack flex={1} justifyContent="center" padding="$4" space="$5">
                 <YStack space="$2" alignItems="center">
-                    <Text color="$primary" fontFamily="$heading" fontSize={48} textAlign="center"
-                        textShadowColor="$primary" textShadowRadius={10}>
+                    <Image
+                        source={require('../../assets/images/icon.png')}
+                        style={{ width: 120, height: 120, marginBottom: 10 }}
+                        resizeMode="contain"
+                    />
+                    <Text color="$primary" fontFamily="$heading" fontSize={32} textAlign="center">
                         SPLIT-Z
                     </Text>
                     <Text color="$color" opacity={0.7} fontFamily="$body">Neo-Social Finance</Text>

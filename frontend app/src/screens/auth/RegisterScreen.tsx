@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
+import { View, KeyboardAvoidingView, Platform, TouchableOpacity, Image } from 'react-native';
 import { YStack, Text, XStack } from 'tamagui';
 import { useForm, Controller } from 'react-hook-form';
 import { useRouter } from 'expo-router';
@@ -51,6 +51,11 @@ export default function RegisterScreen() {
         >
             <YStack flex={1} justifyContent="center" padding="$4" space="$5">
                 <YStack space="$2" alignItems="center">
+                    <Image
+                        source={require('../../assets/images/icon.png')}
+                        style={{ width: 100, height: 100, marginBottom: 10 }}
+                        resizeMode="contain"
+                    />
                     <Text color="$secondary" fontFamily="$heading" fontSize={32}>JOIN US</Text>
                 </YStack>
 
